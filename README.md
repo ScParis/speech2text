@@ -40,10 +40,20 @@ Este projeto é uma aplicação de transcrição de áudio que utiliza a API Gem
    pip install -r requirements.txt
    ```
 
-## Configuração da API Gemini
-Para utilizar a API Gemini, você precisa de uma chave de API. Siga os passos abaixo:
-1. Acesse o site da API Gemini e registre-se para obter uma chave de API.
-2. Adicione a chave de API ao arquivo `config.py` como `GEMINI_API_KEY`.
+## Configuração do arquivo config.py
+
+Para utilizar a API Gemini, você deve configurar o arquivo `config.py`. Agora, o arquivo utiliza uma variável de ambiente para armazenar a chave da API.
+
+### Variáveis de Ambiente
+
+1. Defina a variável de ambiente `GEMINI_API_KEYVS` com sua chave da API Gemini.
+
+   No terminal, você pode definir a variável de ambiente com o seguinte comando:
+   ```bash
+   export GEMINI_API_KEYVS='sua_chave_aqui'
+   ```
+
+2. Certifique-se de que o arquivo `config.py` está configurado para usar essa variável de ambiente.
 
 ## Dependências Adicionais
 Além das bibliotecas listadas, você pode precisar instalar o `ffmpeg` para conversão de áudio. Você pode instalá-lo usando:
