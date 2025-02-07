@@ -1,6 +1,13 @@
 config.py
 /media/piperun/HD1/Projects/speech2text/9flbbpunb1oo888ogw404gwccwscsco.wav
-.wav
-.mp3
-.webm
-.mkv
+/temp/
+*.wav
+*.mp3
+*.webm
+*.mkv
+__pycache__/
+*.pyc
+*.tmp
+*.swp
+*.swo
+*.class
