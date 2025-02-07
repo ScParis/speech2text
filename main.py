@@ -31,7 +31,6 @@ MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
 WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 
 # Configurações da API Gemini (Carregadas do config.py)
-# API_KEY = "SUA_CHAVE_DE_API_DO_GEMINI"  # Remova esta linha
 GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
 
 class MyLogger(object):
@@ -164,6 +163,19 @@ def convert_to_mp3(input_file, output_file):
         print("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
         return None, None
 
+def correct_transcript_gemini(transcript):
+    """Corrigir a transcrição com o Gemini."""
+    prompt = f"""Corrija a ortografia e gramática do texto a seguir. Certifique-se de que o nome da empresa seja sempre "PipeRun", e não "Papurã" ou qualquer outra variação.
+    {transcript}
+    """
+    corrected_transcript = generate_text_gemini(prompt)
+
+    if corrected_transcript:
+        return corrected_transcript
+    else:
+        print("Falha ao corrigir a transcrição com o Gemini.")
+        return transcript
+
 def transcribe_audio_gemini(audio_file):
     """Transcreve um arquivo de áudio usando a API Gemini."""
     try:
@@ -178,7 +190,7 @@ def transcribe_audio_gemini(audio_file):
                 {
                     "parts": [
                         {
-                            "text": "Transcreva o áudio a seguir para texto." # PROMPT SIMPLIFICADO
+                            "text": """Transcreva o áudio completo a seguir para texto. Separe o diálogo por locutor e interlocutor, indicando quem fala o quê. Se tiver dificuldade em entender alguma palavra, tente aproximar ao máximo. Não adicione informações que não estão presentes no áudio.""" # PROMPT DETALHADO
                         },
                         {
                             "inlineData": {
@@ -334,17 +346,27 @@ if __name__ == "__main__":
     transcricao_original, transcription_time = transcribe_audio_gemini(audio_file_mp3) # Usar o arquivo MP3
 
     if transcricao_original:
-        print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
-        print(f"Tempo de transcrição: {transcription_time:.2f} segundos")
+        # Corrigir a transcrição com o Gemini
+        print("Corrigindo a transcrição com o Gemini...")
+        transcricao_corrigida = correct_transcript_gemini(transcricao_original)
 
-        # 3. Aprimorar a transcrição com o Gemini (opcional)
-        # prompt = f"Corrija a gramática, a ortografia e o estilo do seguinte texto:\n{transcricao_original}"
-        # texto_gerado = generate_text_gemini(prompt)
-
-        # if texto_gerado:
-        #     print(f"Transcrição aprimorada (Gemini):\n{texto_gerado}")
-        # else:
-        #     print("Falha ao aprimorar a transcrição com o Gemini.")
-        print("Aprimoramento com Gemini desativado por enquanto.")
-    else:
-        print("Falha ao transcrever o áudio com a API Gemini.")
+        if transcricao_corrigida:
+            print(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
+        else:
+            print("Falha ao corrigir a transcrição com o Gemini.")
+   # if transcricao_original:
+   #     print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
+   #     print(f"Tempo de transcrição: {transcription_time:.2f} segundos")
+#
+   #     # 3. Aprimorar a transcrição com o Gemini (opcional)
+   #     prompt = f"Corrija a gramática, a ortografia e o estilo do seguinte texto:\n{transcricao_original}"
+   #     texto_gerado = generate_text_gemini(prompt)
+#
+   #     if texto_gerado:
+   #          print(f"Transcrição aprimorada (Gemini):\n{texto_gerado}")
+   #     else:
+   #          print("Falha ao aprimorar a transcrição com o Gemini.")
+   #     print("Aprimoramento com Gemini desativado por enquanto.")
+   # else:
+   #     print("Falha ao transcrever o áudio com a API Gemini.")
+   
