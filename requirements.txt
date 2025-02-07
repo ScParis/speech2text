@@ -1,0 +1,7 @@
+requests
+pyaudio
+wave
+yt-dlp
+tqdm
+ffmpeg-python
+google-auth
