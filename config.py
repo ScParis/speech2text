@@ -1,2 +1,0 @@
-GEMINI_API_KEY = "AIzaSyCji17JOt2Zl1-GPjkO4NHhleSWzIwBFlE"  # Substitua pela sua chave real
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"  # URL da API Gemini
