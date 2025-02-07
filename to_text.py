@@ -11,6 +11,7 @@ import subprocess
 import time  # Para medir o tempo
 import tqdm  # Para a barra de progresso
 import re #para validar a URL
+import shutil
 
 # Configurações de gravação
 CHUNK = 1024
@@ -18,9 +19,16 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 8000 #ALTERADO - REDUZIR A TAXA DE AMOSTRAGEM
 RECORD_SECONDS = 1  # Grava por 5 segundos
-WAVE_OUTPUT_FILENAME = "output.wav"
-MP3_OUTPUT_FILENAME = "output.mp3" # Adicionado arquivo de saída MP3
-WAVE_OUTPUT_FILENAME_REDUCED = "output_reduced.wav" # Defina a variável aqui
+
+OUTPUT_DIR = "output_files"  # Define your output directory
+
+# Ensure the output directory exists
+if not os.path.exists(OUTPUT_DIR):
+    os.makedirs(OUTPUT_DIR)
+
+WAVE_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.wav")
+MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
+WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 
 # Configurações da API Gemini (Carregadas do config.py)
 # API_KEY = "SUA_CHAVE_DE_API_DO_GEMINI"  # Remova esta linha
@@ -40,7 +48,7 @@ class MyLogger(object):
         print(msg)
 
     def info(self, msg):
-        if msg.startswith('\[download]'):
+        if msg.startswith('[download]'):
             if self.pbar is None:
                 self.pbar = tqdm.tqdm(total=100, unit="%", desc="Baixando")
             percentage = float(msg.split()[1][:-1])
@@ -51,6 +59,11 @@ class MyLogger(object):
 
 def record_audio():
     """Grava áudio do microfone e salva em um arquivo."""
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(WAVE_OUTPUT_FILENAME)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     p = pyaudio.PyAudio()
 
     stream = p.open(format=FORMAT,
@@ -79,6 +92,7 @@ def record_audio():
     wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
+    return WAVE_OUTPUT_FILENAME
 
 def download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm"):
     """Baixa o áudio de um vídeo do YouTube e salva em um arquivo WEBM."""
@@ -242,8 +256,14 @@ def generate_text_gemini(prompt):
         print(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
         return None
 
-if __name__ == "__main__":
+def clear_output_directory():
+    """Remove all files in the output directory."""
+    if os.path.exists(OUTPUT_DIR):
+        shutil.rmtree(OUTPUT_DIR)  # Remove the entire directory
+    os.makedirs(OUTPUT_DIR)  # Recreate the directory
 
+if __name__ == "__main__":
+    clear_output_directory()  # Clear the output directory at the start
     # 0. Escolher a fonte do áudio
     print("Escolha uma opção:")
     print("1. Gravar áudio do microfone")
@@ -255,10 +275,9 @@ if __name__ == "__main__":
         # 1. Gravar o áudio
         print("Preparando para gravar. Certifique-se de que o microfone está conectado e configurado.")
         start_time = time.time()
-        record_audio()
+        audio_file = record_audio()
         record_time = time.time() - start_time
-        print(f"Áudio gravado e salvo em {WAVE_OUTPUT_FILENAME} em {record_time:.2f} segundos")
-        audio_file = WAVE_OUTPUT_FILENAME
+        print(f"Áudio gravado e salvo em {audio_file} em {record_time:.2f} segundos")
     elif opcao == "2":
         # 1. Fornecer o caminho para um arquivo de áudio
         audio_file = input("Digite o caminho completo para o arquivo de áudio: ")
@@ -276,7 +295,7 @@ if __name__ == "__main__":
             exit()
 
         start_time = time.time()
-        audio_file, download_time = download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm") # Baixar o vídeo completo
+        audio_file, download_time = download_audio_from_youtube(youtube_url, output_filename=os.path.join(OUTPUT_DIR, "youtube_audio.webm")) # Baixar o vídeo completo
         if not audio_file:
             print("Falha ao baixar o áudio do YouTube. Saindo.")
             exit()
@@ -287,6 +306,10 @@ if __name__ == "__main__":
         exit()
 
     #Reduzir taxa de amostragem
+    output_dir = os.path.dirname(WAVE_OUTPUT_FILENAME_REDUCED)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     audio_file_reduced, conversion_time = reduce_sample_rate(audio_file, WAVE_OUTPUT_FILENAME_REDUCED, 8000)
 
     if not audio_file_reduced:
@@ -295,6 +318,10 @@ if __name__ == "__main__":
     print(f"Áudio com taxa de amostragem reduzida e salvo em {audio_file_reduced} em {conversion_time:.2f} segundos")
 
     # Converter para MP3
+    output_dir = os.path.dirname(MP3_OUTPUT_FILENAME)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_OUTPUT_FILENAME)
     if not audio_file_mp3:
         print("Falha ao converter para MP3. Saindo.")
