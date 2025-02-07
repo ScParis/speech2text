@@ -347,16 +347,16 @@ if __name__ == "__main__":
 
     if transcricao_original:
         # Corrigir a transcrição com o Gemini
-        print("Corrigindo a transcrição com o Gemini...")
+        print("Corrigindo a transcrição com o Gemini...\n")
         transcricao_corrigida = correct_transcript_gemini(transcricao_original)
 
         if transcricao_corrigida:
             print(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
+            print(f"Tempo de transcrição: {transcription_time:.2f} segundos")
         else:
             print("Falha ao corrigir a transcrição com o Gemini.")
    # if transcricao_original:
    #     print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
-   #     print(f"Tempo de transcrição: {transcription_time:.2f} segundos")
 #
    #     # 3. Aprimorar a transcrição com o Gemini (opcional)
    #     prompt = f"Corrija a gramática, a ortografia e o estilo do seguinte texto:\n{transcricao_original}"
