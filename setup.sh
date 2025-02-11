@@ -1,10 +1,16 @@
 #!/bin/bash
 
-# Create virtual environment
-python3 -m venv venv
+# Define the virtual environment path
+VENV_PATH="venv"
+
+# Check if virtual environment exists, create if not
+if [ ! -d "$VENV_PATH" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv "$VENV_PATH"
+fi
 
 # Activate virtual environment
-source venv/bin/activate
+source "$VENV_PATH/bin/activate"
 
 # Upgrade pip
 pip install --upgrade pip

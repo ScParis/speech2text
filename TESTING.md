@@ -19,7 +19,7 @@ source venv/bin/activate
 
 3. Set Gemini API Key:
 ```bash
-export GEMINI_API_KEYVS='your_api_key_here'
+export GEMINI_API_KEY='your_api_key_here'
 ```
 
 ## Running the Application
