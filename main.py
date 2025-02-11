@@ -127,7 +127,7 @@ def download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm
             ydl.download([youtube_url])
         return output_filename, time.time() - start_time_download
     except Exception as e:
-        print(f"Erro ao baixar o áudio do YouTube: {e}")
+        logging.error(f"Erro ao baixar o áudio do YouTube: {e}")
         return None, None
 
 def reduce_sample_rate(input_file, output_file, new_rate):
@@ -135,7 +135,7 @@ def reduce_sample_rate(input_file, output_file, new_rate):
     try:
         # Verificar se o arquivo existe
         if not os.path.exists(input_file):
-            print(f"Erro: Arquivo não encontrado: {input_file}")
+            logging.error(f"Erro: Arquivo não encontrado: {input_file}")
             return None, None
 
         start_time_conversion = time.time()
@@ -147,13 +147,13 @@ def reduce_sample_rate(input_file, output_file, new_rate):
         ], check=True, capture_output=True, text=True, timeout=600) # Limite de tempo de 10 minutos
         return output_file, time.time() - start_time_conversion
     except subprocess.CalledProcessError as e:
-        print(f"Erro ao reduzir a taxa de amostragem: {e.stderr}")
+        logging.error(f"Erro ao reduzir a taxa de amostragem: {e.stderr}")
         return None, None
     except subprocess.TimeoutExpired:
-        print("Tempo limite excedido ao reduzir a taxa de amostragem.")
+        logging.error("Tempo limite excedido ao reduzir a taxa de amostragem.")
         return None, None
     except FileNotFoundError:
-        print("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
+        logging.error("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
         return None, None
 
 def convert_to_mp3(input_file, output_file):
@@ -170,13 +170,13 @@ def convert_to_mp3(input_file, output_file):
         ], check=True, capture_output=True, text=True, timeout=600) # Limite de tempo de 10 minutos
         return output_file, time.time() - start_time_conversion
     except subprocess.CalledProcessError as e:
-        print(f"Erro ao converter para MP3: {e.stderr}")
+        logging.error(f"Erro ao converter para MP3: {e.stderr}")
         return None, None
     except subprocess.TimeoutExpired:
-        print("Tempo limite excedido ao converter para MP3.")
+        logging.error("Tempo limite excedido ao converter para MP3.")
         return None, None
     except FileNotFoundError:
-        print("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
+        logging.error("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
         return None, None
 
 def correct_transcript_gemini(transcript):
@@ -189,14 +189,18 @@ def correct_transcript_gemini(transcript):
     if corrected_transcript:
         return corrected_transcript
     else:
-        print("Falha ao corrigir a transcrição com o Gemini.")
+        logging.error("Falha ao corrigir a transcrição com o Gemini.")
         return transcript
 
 def transcribe_audio_gemini(audio_file):
     """Transcreve um arquivo de áudio usando a API Gemini."""
     # Validate input
-    if not isinstance(audio_file, str):
-        logging.error(f"Invalid audio file type: {type(audio_file)}")
+    if isinstance(audio_file, tuple):
+        # If a tuple is passed, extract the first element (file path)
+        audio_file = audio_file[0] if audio_file else None
+    
+    if not audio_file or not isinstance(audio_file, str):
+        logging.error(f"Invalid audio file: {audio_file}")
         return None
 
     try:
@@ -248,7 +252,6 @@ def transcribe_audio_gemini(audio_file):
 
         # Processar a resposta
         result = response.json()
-        transcription_time = time.time() - start_time
 
         try:
             transcript = result["candidates"][0]["content"]["parts"][0]["text"]
@@ -378,7 +381,7 @@ if __name__ == "__main__":
     audio_file_reduced, conversion_time = reduce_sample_rate(audio_file, WAVE_OUTPUT_FILENAME_REDUCED, 8000)
 
     if not audio_file_reduced:
-        print("Falha ao reduzir a taxa de amostragem. Saindo.")
+        logging.error("Falha ao reduzir a taxa de amostragem. Saindo.")
         exit()
     print(f"Áudio com taxa de amostragem reduzida e salvo em {audio_file_reduced} em {conversion_time:.2f} segundos")
 
@@ -389,7 +392,7 @@ if __name__ == "__main__":
 
     audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_OUTPUT_FILENAME)
     if not audio_file_mp3:
-        print("Falha ao converter para MP3. Saindo.")
+        logging.error("Falha ao converter para MP3. Saindo.")
         exit()
     print(f"Áudio convertido para MP3 e salvo em {audio_file_mp3} em {conversion_time:.2f} segundos")
 
@@ -407,7 +410,7 @@ if __name__ == "__main__":
             print(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
             print(f"\nTempo de transcrição: {transcription_time:.2f} segundos")
         else:
-            print("Falha ao corrigir a transcrição com o Gemini.")
+            logging.error("Falha ao corrigir a transcrição com o Gemini.")
     if transcricao_original:
         print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
 
@@ -418,7 +421,7 @@ if __name__ == "__main__":
         if texto_gerado:
             print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
         else:
-             print("Falha ao aprimorar a transcrição com o Gemini.")
+             logging.error("Falha ao aprimorar a transcrição com o Gemini.")
         print("Aprimoramento com Gemini desativado por enquanto.")
     else:
-        print("Falha ao transcrever o áudio com a API Gemini.")
+        logging.error("Falha ao transcrever o áudio com a API Gemini.")

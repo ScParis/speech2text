@@ -108,7 +108,14 @@ class TranscriptionThread(QThread):
     def run(self):
         try:
             # Perform transcription
-            result = transcribe_audio_gemini(self.audio_file)
+            # Handle both tuple and string inputs
+            if isinstance(self.audio_file, tuple):
+                audio_path = self.audio_file[0] if self.audio_file else None
+            else:
+                audio_path = self.audio_file
+            
+            # Perform transcription
+            result = transcribe_audio_gemini(audio_path)
             
             # Emit the result
             if result is not None:
