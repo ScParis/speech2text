@@ -3,13 +3,66 @@ import os
 import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QTextEdit, 
-                             QFileDialog, QLineEdit, QMessageBox)
+                             QFileDialog, QLineEdit, QMessageBox, QDialog, 
+                             QFormLayout, QDialogButtonBox)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
 # Import existing project functions
 from main import (record_audio, download_audio_from_youtube, 
                   transcribe_audio_gemini, convert_to_mp3)
+from config import update_gemini_config  # We'll create this function in config.py
+
+class APIConfigDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('Gemini API Configuration')
+        self.setModal(True)
+        
+        # Layout
+        layout = QFormLayout()
+        
+        # API URL Input
+        self.api_url_input = QLineEdit()
+        self.api_url_input.setPlaceholderText('Enter Gemini API URL')
+        self.api_url_input.setText(os.getenv('GEMINI_API_URL', 
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'))
+        layout.addRow('API URL:', self.api_url_input)
+        
+        # API Key Input
+        self.api_key_input = QLineEdit()
+        self.api_key_input.setPlaceholderText('Enter Gemini API Key')
+        self.api_key_input.setEchoMode(QLineEdit.Password)
+        self.api_key_input.setText(os.getenv('GEMINI_API_KEYVS', ''))
+        layout.addRow('API Key:', self.api_key_input)
+        
+        # Buttons
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel
+        )
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addRow(button_box)
+        
+        self.setLayout(layout)
+    
+    def accept(self):
+        # Validate and save configuration
+        api_url = self.api_url_input.text().strip()
+        api_key = self.api_key_input.text().strip()
+        
+        if not api_url or not api_key:
+            QMessageBox.warning(self, 'Validation Error', 
+                                'Both API URL and API Key are required.')
+            return
+        
+        try:
+            # Update configuration
+            update_gemini_config(api_url, api_key)
+            super().accept()
+        except Exception as e:
+            QMessageBox.critical(self, 'Configuration Error', 
+                                 f'Failed to save configuration: {str(e)}')
 
 class TranscriptionThread(QThread):
     """Background thread for audio transcription"""
@@ -36,7 +89,37 @@ class TranscriptionThread(QThread):
 class SpeechToTextApp(QMainWindow):
     def __init__(self):
         super().__init__()
+        
+        # Check API configuration on startup
+        self.check_api_config()
+        
         self.initUI()
+
+    def check_api_config(self):
+        """Check if API configuration is set"""
+        if not os.getenv('GEMINI_API_KEYVS'):
+            QMessageBox.information(
+                self, 
+                'API Configuration Needed', 
+                'Please configure your Gemini API settings before using the app.'
+            )
+            self.open_api_config()
+
+    def open_api_config(self):
+        """Open API configuration dialog"""
+        config_dialog = APIConfigDialog(self)
+        if config_dialog.exec_() == QDialog.Accepted:
+            QMessageBox.information(
+                self, 
+                'Configuration Saved', 
+                'Gemini API settings have been updated successfully.'
+            )
+        else:
+            QMessageBox.warning(
+                self, 
+                'Configuration Skipped', 
+                'You will not be able to use transcription features without API configuration.'
+            )
 
     def initUI(self):
         # Main window setup
@@ -52,6 +135,16 @@ class SpeechToTextApp(QMainWindow):
         header.setFont(QFont('Arial', 18, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(header)
+        
+        # API Configuration
+        config_action = QPushButton('API Settings')
+        config_action.setIcon(qta.icon('fa.cog', color='white'))
+        config_action.clicked.connect(self.open_api_config)
+        
+        config_layout = QHBoxLayout()
+        config_layout.addStretch()
+        config_layout.addWidget(config_action)
+        main_layout.addLayout(config_layout)
         
         # Audio Input Section
         input_layout = QHBoxLayout()

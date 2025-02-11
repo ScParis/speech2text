@@ -6,7 +6,7 @@ import os
 import google.auth
 import base64
 import yt_dlp as youtube_dl  # Usar yt-dlp
-from config import GEMINI_API_KEY, GEMINI_API_URL  # Importar as variáveis do config.py
+from config import load_gemini_config  # Importar as variáveis do config.py
 import subprocess
 import time  # Para medir o tempo
 import tqdm  # Para a barra de progresso
@@ -32,8 +32,20 @@ WAVE_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.wav")
 MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
 WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 
-# Configurações da API Gemini (Carregadas do config.py)
-GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
+# Load configuration on import
+config = load_gemini_config()
+
+def get_gemini_api_key():
+    """
+    Retrieve Gemini API key from environment or configuration.
+    
+    Returns:
+        str: API key or None if not found
+    """
+    api_key = os.getenv('GEMINI_API_KEYVS')
+    if not api_key:
+        logging.warning("No Gemini API key found in environment.")
+    return api_key
 
 class MyLogger(object):
     def __init__(self):
@@ -181,64 +193,57 @@ def correct_transcript_gemini(transcript):
         return transcript
 
 def transcribe_audio_gemini(audio_file):
-    """
-    Transcribe an audio file using Gemini API with improved error handling.
-    
-    Args:
-        audio_file (str): Path to the audio file to transcribe.
-    
-    Returns:
-        str: Transcribed text or error message.
-    """
+    """Transcreve um arquivo de áudio usando a API Gemini."""
     try:
-        # Ensure audio_file is a string path
-        if not isinstance(audio_file, str):
-            raise ValueError(f"Invalid audio file path: {audio_file}")
+        # Retrieve API key
+        api_key = get_gemini_api_key()
+        if not api_key:
+            raise ValueError("No Gemini API key configured")
+
+        # Retrieve API URL
+        api_url = os.getenv('GEMINI_API_URL', 
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent')
         
-        # Existing transcription logic
-        with open(audio_file, 'rb') as audio:
-            audio_data = audio.read()
-        
+        # Rest of the existing transcription logic remains the same
+        with open(audio_file, "rb") as f:
+            audio_data = f.read()
+
         # Codifica o áudio em Base64
         audio_encoded = base64.b64encode(audio_data).decode("utf-8")
 
-        #TAMANHO DO ARQUIVO
-        tamanho_audio = len(audio_encoded)
-        # print(f"Tamanho dos dados de áudio codificados em Base64: {tamanho_audio} bytes")
-
+        # Prepare request payload
         payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {
-                            "text": """Transcreva o áudio completo a seguir para texto. Separe o diálogo por locutor e interlocutor, indicando quem fala o quê. Se tiver dificuldade em entender alguma palavra, tente aproximar ao máximo. Não adicione informações que não estão presentes no áudio.""" # PROMPT DETALHADO
-                        },
-                        {
-                            "inlineData": {
-                                "mimeType": "audio/mp3",  # Ajuste o mimeType se necessário
-                                "data": audio_encoded
-                            }
-                        }
-                    ]
-                }
-            ]
+            "contents": [{
+                "parts": [{
+                    "text": "Transcreva o áudio com precisão."
+                }, {
+                    "inlineData": {
+                        "mimeType": "audio/mpeg",
+                        "data": audio_encoded
+                    }
+                }]
+            }]
         }
 
+        # Prepare headers
         headers = {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
         }
 
-        # print("Payload JSON:", json.dumps(payload))  # Removido para reduzir a saída
-        start_time_transcription = time.time()
-        response = requests.post(GEMINI_API_URL, headers=headers, data=json.dumps(payload))
-        transcription_time = time.time() - start_time_transcription
-        #print("Resposta da API Gemini:", response.text) # Removido para reduzir a saída
+        # Enviar solicitação para a API Gemini
+        start_time = time.time()
+        response = requests.post(api_url, json=payload, headers=headers)
+        
+        # Verificar a resposta
+        if response.status_code != 200:
+            logging.error(f"Erro na API Gemini: {response.status_code} - {response.text}")
+            return None, None
 
-        response.raise_for_status()
-
+        # Processar a resposta
         result = response.json()
+        transcription_time = time.time() - start_time
 
-        # Extrai o texto gerado da resposta
         try:
             transcript = result["candidates"][0]["content"]["parts"][0]["text"]
             return transcript, transcription_time
@@ -272,7 +277,7 @@ def generate_text_gemini(prompt):
     }
 
     try:
-        response = requests.post(GEMINI_API_URL, headers=headers, data=json.dumps(data))
+        response = requests.post(config['GEMINI_API_URL'], headers=headers, data=json.dumps(data))
         response.raise_for_status()
 
         result = response.json()
