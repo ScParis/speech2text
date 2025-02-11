@@ -194,17 +194,23 @@ def correct_transcript_gemini(transcript):
 
 def transcribe_audio_gemini(audio_file):
     """Transcreve um arquivo de áudio usando a API Gemini."""
+    # Validate input
+    if not isinstance(audio_file, str):
+        logging.error(f"Invalid audio file type: {type(audio_file)}")
+        return None
+
     try:
         # Retrieve API key
-        api_key = get_gemini_api_key()
+        api_key = os.getenv('GEMINI_API_KEYVS')
         if not api_key:
-            raise ValueError("No Gemini API key configured")
+            logging.error("No Gemini API key found")
+            return None
 
         # Retrieve API URL
         api_url = os.getenv('GEMINI_API_URL', 
             'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent')
         
-        # Rest of the existing transcription logic remains the same
+        # Read audio file
         with open(audio_file, "rb") as f:
             audio_data = f.read()
 
@@ -238,7 +244,7 @@ def transcribe_audio_gemini(audio_file):
         # Verificar a resposta
         if response.status_code != 200:
             logging.error(f"Erro na API Gemini: {response.status_code} - {response.text}")
-            return None, None
+            return None
 
         # Processar a resposta
         result = response.json()
@@ -246,24 +252,24 @@ def transcribe_audio_gemini(audio_file):
 
         try:
             transcript = result["candidates"][0]["content"]["parts"][0]["text"]
-            return transcript, transcription_time
+            return transcript  # Return only the transcript
         except (KeyError, IndexError):
             logging.error("Erro ao extrair a transcrição da resposta do Gemini.")
-            logging.error("Resposta completa do Gemini:", result)
-            return None, None
+            logging.error(f"Resposta completa do Gemini: {result}")
+            return None
 
     except FileNotFoundError:
         logging.error(f"Erro: Arquivo não encontrado: {audio_file}")
-        return None, None
+        return None
     except requests.exceptions.RequestException as e:
         logging.error(f"Erro na requisição para a API Gemini: {e}")
-        return None, None
+        return None
     except json.JSONDecodeError as e:
         logging.error(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
-        return None, None
+        return None
     except Exception as e:
         logging.error(f"Erro geral na transcrição com Gemini: {e}")
-        return None, None
+        return None
 
 def generate_text_gemini(prompt):
     """Gera texto usando a API Gemini (para aprimoramento, se necessário)."""

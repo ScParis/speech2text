@@ -248,15 +248,11 @@ class SpeechToTextApp(QMainWindow):
         self.transcript_thread.start()
 
     def update_transcript(self, result):
-        # Handle tuple return from transcription
-        if isinstance(result, tuple):
-            transcript, _ = result
-            if transcript:
-                self.transcript_display.setPlainText(transcript)
-            else:
-                self.show_transcription_error("No transcript could be generated.")
-        else:
+        """Update transcript display with the result"""
+        if result:
             self.transcript_display.setPlainText(str(result))
+        else:
+            self.show_transcription_error("No transcript could be generated.")
 
     def show_transcription_error(self, error):
         QMessageBox.warning(self, 'Transcription Error', str(error))
