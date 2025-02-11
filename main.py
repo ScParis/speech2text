@@ -303,6 +303,98 @@ def generate_text_gemini(prompt):
         logging.error(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
         return None
 
+def translate_text_gemini(text, target_language='en'):
+    """
+    Translate text using Gemini API.
+    
+    Args:
+        text (str): Text to translate
+        target_language (str): Target language code (default: English)
+    
+    Returns:
+        str: Translated text or None if translation fails
+    """
+    # Validate input
+    if not text or not isinstance(text, str):
+        logging.error("Invalid text for translation")
+        return None
+
+    try:
+        # Retrieve API key and URL
+        api_key = os.getenv('GEMINI_API_KEYVS')
+        if not api_key:
+            logging.error("No Gemini API key found for translation")
+            return None
+
+        api_url = os.getenv('GEMINI_API_URL', 
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent')
+        
+        # Prepare translation prompt
+        language_map = {
+            'en': 'English',
+            'es': 'Spanish',
+            'fr': 'French',
+            'de': 'German',
+            'it': 'Italian',
+            'pt': 'Portuguese',
+            'ru': 'Russian',
+            'zh': 'Chinese',
+            'ja': 'Japanese',
+            'ar': 'Arabic'
+        }
+        
+        # Get full language name
+        target_language_name = language_map.get(target_language, target_language.capitalize())
+        
+        # Prepare request payload
+        payload = {
+            "contents": [{
+                "parts": [{
+                    "text": f"""Translate the following text to {target_language_name}. 
+                    Preserve the original meaning as closely as possible. 
+                    If the text appears to be in {target_language_name}, return it as-is.
+                    
+                    Text to translate: {text}"""
+                }]
+            }]
+        }
+
+        # Prepare headers
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        }
+
+        # Send translation request
+        response = requests.post(api_url, json=payload, headers=headers)
+        
+        # Check response
+        if response.status_code != 200:
+            logging.error(f"Translation API error: {response.status_code} - {response.text}")
+            return None
+
+        # Process response
+        result = response.json()
+
+        try:
+            # Extract translated text
+            translated_text = result["candidates"][0]["content"]["parts"][0]["text"]
+            return translated_text.strip()
+        except (KeyError, IndexError):
+            logging.error("Failed to extract translation from Gemini response")
+            logging.error(f"Full API response: {result}")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Translation request error: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to decode translation response: {e}")
+        return None
+    except Exception as e:
+        logging.error(f"Unexpected error during translation: {e}")
+        return None
+
 def clear_output_directory():
     """Remove all files in the output directory."""
     if os.path.exists(OUTPUT_DIR):
@@ -423,5 +515,12 @@ if __name__ == "__main__":
         else:
              logging.error("Falha ao aprimorar a transcrição com o Gemini.")
         print("Aprimoramento com Gemini desativado por enquanto.")
+
+    # Traduzir a transcrição
+    target_language = input("Digite o código do idioma para tradução (ex: en, es, fr): ")
+    translated_text = translate_text_gemini(transcricao_original, target_language)
+
+    if translated_text:
+        print(f"\nTradução para {target_language}:\n{translated_text}")
     else:
-        logging.error("Falha ao transcrever o áudio com a API Gemini.")
+        logging.error("Falha ao traduzir a transcrição.")

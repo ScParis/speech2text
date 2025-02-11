@@ -4,13 +4,13 @@ import qtawesome as qta
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QLabel, QTextEdit, 
                              QFileDialog, QLineEdit, QMessageBox, QDialog, 
-                             QFormLayout, QDialogButtonBox)
+                             QFormLayout, QDialogButtonBox, QComboBox)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon
 
 # Import existing project functions
 from main import (record_audio, download_audio_from_youtube, 
-                  transcribe_audio_gemini, convert_to_mp3)
+                  transcribe_audio_gemini, convert_to_mp3, translate_text_gemini)
 from config import update_gemini_config  # We'll create this function in config.py
 
 class APIConfigDialog(QDialog):
@@ -125,6 +125,29 @@ class TranscriptionThread(QThread):
         except Exception as e:
             self.error_occurred.emit(str(e))
 
+class TranslationThread(QThread):
+    """Background thread for text translation"""
+    translation_complete = pyqtSignal(str)
+    error_occurred = pyqtSignal(str)
+
+    def __init__(self, text, target_language):
+        super().__init__()
+        self.text = text
+        self.target_language = target_language
+
+    def run(self):
+        try:
+            # Perform translation
+            result = translate_text_gemini(self.text, self.target_language)
+            
+            # Emit the result
+            if result is not None:
+                self.translation_complete.emit(result)
+            else:
+                self.error_occurred.emit("Translation failed. No result returned.")
+        except Exception as e:
+            self.error_occurred.emit(str(e))
+
 class SpeechToTextApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -133,7 +156,10 @@ class SpeechToTextApp(QMainWindow):
         self.check_api_config()
         
         self.initUI()
-
+        
+        # Store last transcription for potential translation
+        self.last_transcription = None
+    
     def check_api_config(self):
         """Check if API configuration is set"""
         if not os.getenv('GEMINI_API_KEYVS'):
@@ -167,13 +193,13 @@ class SpeechToTextApp(QMainWindow):
         
         # Central widget and main layout
         central_widget = QWidget()
-        main_layout = QVBoxLayout()
+        self.main_layout = QVBoxLayout()
         
         # Header
         header = QLabel('Speech-to-Text Transcriber')
         header.setFont(QFont('Arial', 18, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
-        main_layout.addWidget(header)
+        self.main_layout.addWidget(header)
         
         # API Configuration
         config_action = QPushButton('API Settings')
@@ -183,7 +209,7 @@ class SpeechToTextApp(QMainWindow):
         config_layout = QHBoxLayout()
         config_layout.addStretch()
         config_layout.addWidget(config_action)
-        main_layout.addLayout(config_layout)
+        self.main_layout.addLayout(config_layout)
         
         # Audio Input Section
         input_layout = QHBoxLayout()
@@ -205,27 +231,49 @@ class SpeechToTextApp(QMainWindow):
         yt_btn.clicked.connect(lambda: self.download_youtube_audio(youtube_input.text()))
         input_layout.addWidget(yt_btn)
         
-        main_layout.addLayout(input_layout)
+        self.main_layout.addLayout(input_layout)
         
         # File Upload Button
         file_btn = QPushButton('Upload Audio File')
         file_btn.setIcon(qta.icon('fa.upload', color='white'))
         file_btn.clicked.connect(self.upload_audio_file)
-        main_layout.addWidget(file_btn)
+        self.main_layout.addWidget(file_btn)
         
         # Transcription Display
         self.transcript_display = QTextEdit()
         self.transcript_display.setReadOnly(True)
-        main_layout.addWidget(self.transcript_display)
+        self.main_layout.addWidget(self.transcript_display)
+        
+        # Translation section
+        translation_layout = QHBoxLayout()
+        
+        # Language selection dropdown
+        self.language_dropdown = QComboBox()
+        self.language_dropdown.addItems([
+            'English (en)', 'Spanish (es)', 'French (fr)', 
+            'German (de)', 'Italian (it)', 'Portuguese (pt)', 
+            'Russian (ru)', 'Chinese (zh)', 'Japanese (ja)', 
+            'Arabic (ar)'
+        ])
+        translation_layout.addWidget(QLabel('Translate to:'))
+        translation_layout.addWidget(self.language_dropdown)
+        
+        # Translate button
+        self.translate_btn = QPushButton('Translate')
+        self.translate_btn.clicked.connect(self.start_translation)
+        translation_layout.addWidget(self.translate_btn)
+        
+        # Add translation layout to main layout
+        self.main_layout.addLayout(translation_layout)
         
         # Export Button
         export_btn = QPushButton('Export Transcript')
         export_btn.setIcon(qta.icon('fa.save', color='white'))
         export_btn.clicked.connect(self.export_transcript)
-        main_layout.addWidget(export_btn)
+        self.main_layout.addWidget(export_btn)
         
         # Set layout
-        central_widget.setLayout(main_layout)
+        central_widget.setLayout(self.main_layout)
         self.setCentralWidget(central_widget)
         
         # Apply dark theme
@@ -290,12 +338,40 @@ class SpeechToTextApp(QMainWindow):
         """Update transcript display with the result"""
         if result:
             self.transcript_display.setPlainText(str(result))
+            self.last_transcription = result
         else:
             self.show_transcription_error("No transcript could be generated.")
 
     def show_transcription_error(self, error):
         QMessageBox.warning(self, 'Transcription Error', str(error))
 
+    def start_translation(self):
+        # Check if there's a transcription to translate
+        if not self.last_transcription:
+            QMessageBox.warning(self, 'Translation Error', 
+                                'No transcription available to translate.')
+            return
+        
+        # Get selected language code
+        selected_language = self.language_dropdown.currentText().split()[1].strip('()')
+        
+        # Start translation thread
+        self.translation_thread = TranslationThread(
+            self.last_transcription, 
+            selected_language
+        )
+        self.translation_thread.translation_complete.connect(self.update_translation)
+        self.translation_thread.error_occurred.connect(self.show_translation_error)
+        self.translation_thread.start()
+    
+    def update_translation(self, translated_text):
+        # Update transcript area with translated text
+        self.transcript_display.append("\n--- Translation ---")
+        self.transcript_display.append(translated_text)
+    
+    def show_translation_error(self, error):
+        QMessageBox.critical(self, 'Translation Error', str(error))
+    
     def export_transcript(self):
         transcript = self.transcript_display.toPlainText()
         if not transcript:
