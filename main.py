@@ -12,6 +12,7 @@ import time  # Para medir o tempo
 import tqdm  # Para a barra de progresso
 import re #para validar a URL
 import shutil
+from urllib.parse import urlparse, parse_qs
 
 # Configurações de gravação
 CHUNK = 1024
@@ -105,6 +106,8 @@ def download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm
             'logger': MyLogger(),
             'progress_hooks': [],
             'quiet': True, # Remover mensagens de progresso
+            'force': True,  # Adicionado: Força a sobrescrever o arquivo, se existir
+            'no_warnings': True,  # Adicionado: Remove avisos
         }
         start_time_download = time.time()
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -185,6 +188,10 @@ def transcribe_audio_gemini(audio_file):
         # Codifica o áudio em Base64
         audio_encoded = base64.b64encode(audio_data).decode("utf-8")
 
+        #TAMANHO DO ARQUIVO
+        tamanho_audio = len(audio_encoded)
+        # print(f"Tamanho dos dados de áudio codificados em Base64: {tamanho_audio} bytes")
+
         payload = {
             "contents": [
                 {
@@ -207,7 +214,7 @@ def transcribe_audio_gemini(audio_file):
             "Content-Type": "application/json"
         }
 
-        #print("Payload JSON:", json.dumps(payload))  # Removido para reduzir a saída
+        # print("Payload JSON:", json.dumps(payload))  # Removido para reduzir a saída
         start_time_transcription = time.time()
         response = requests.post(GEMINI_API_URL, headers=headers, data=json.dumps(payload))
         transcription_time = time.time() - start_time_transcription
@@ -274,6 +281,20 @@ def clear_output_directory():
         shutil.rmtree(OUTPUT_DIR)  # Remove the entire directory
     os.makedirs(OUTPUT_DIR)  # Recreate the directory
 
+def extract_video_id(url):
+    """Extrai o ID do vídeo do YouTube de diferentes formatos de URL."""
+    parsed_url = urlparse(url)
+    query_params = parse_qs(parsed_url.query)
+
+    if "v" in query_params:
+        return query_params["v"][0]
+    elif parsed_url.hostname == "youtu.be":
+        return parsed_url.path[1:]
+    elif "shorts" in parsed_url.path:
+        return parsed_url.path.split("/")[-1]  # Extract ID for shorts
+    else:
+        return None
+
 if __name__ == "__main__":
     clear_output_directory()  # Clear the output directory at the start
     # 0. Escolher a fonte do áudio
@@ -300,9 +321,15 @@ if __name__ == "__main__":
     elif opcao == "3":
         # 1. Fornecer um link do YouTube
         youtube_url = input("Digite o link do YouTube: ")
-        # Validar a URL
-        regex = r"^(?:https?:\/\/)?(?:www\.)?(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})$"
-        if not re.match(regex, youtube_url):
+
+        # Extract video ID
+        video_id = extract_video_id(youtube_url)
+
+        if video_id:
+            # Reconstruct the URL using only the video ID
+            youtube_url = f"https://www.youtube.com/watch?v={video_id}"
+            print(f"URL do YouTube processada: {youtube_url}")
+        else:
             print("URL do YouTube inválida. Saindo.")
             exit()
 
@@ -369,4 +396,3 @@ if __name__ == "__main__":
         print("Aprimoramento com Gemini desativado por enquanto.")
     else:
         print("Falha ao transcrever o áudio com a API Gemini.")
-   
