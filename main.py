@@ -13,6 +13,7 @@ import tqdm  # Para a barra de progresso
 import re #para validar a URL
 import shutil
 from urllib.parse import urlparse, parse_qs
+import logging
 
 # Configurações de gravação
 CHUNK = 1024
@@ -180,11 +181,24 @@ def correct_transcript_gemini(transcript):
         return transcript
 
 def transcribe_audio_gemini(audio_file):
-    """Transcreve um arquivo de áudio usando a API Gemini."""
+    """
+    Transcribe an audio file using Gemini API with improved error handling.
+    
+    Args:
+        audio_file (str): Path to the audio file to transcribe.
+    
+    Returns:
+        str: Transcribed text or error message.
+    """
     try:
-        with open(audio_file, "rb") as f:
-            audio_data = f.read()
-
+        # Ensure audio_file is a string path
+        if not isinstance(audio_file, str):
+            raise ValueError(f"Invalid audio file path: {audio_file}")
+        
+        # Existing transcription logic
+        with open(audio_file, 'rb') as audio:
+            audio_data = audio.read()
+        
         # Codifica o áudio em Base64
         audio_encoded = base64.b64encode(audio_data).decode("utf-8")
 
@@ -229,21 +243,21 @@ def transcribe_audio_gemini(audio_file):
             transcript = result["candidates"][0]["content"]["parts"][0]["text"]
             return transcript, transcription_time
         except (KeyError, IndexError):
-            print("Erro ao extrair a transcrição da resposta do Gemini.")
-            print("Resposta completa do Gemini:", result)
+            logging.error("Erro ao extrair a transcrição da resposta do Gemini.")
+            logging.error("Resposta completa do Gemini:", result)
             return None, None
 
     except FileNotFoundError:
-        print(f"Erro: Arquivo não encontrado: {audio_file}")
+        logging.error(f"Erro: Arquivo não encontrado: {audio_file}")
         return None, None
     except requests.exceptions.RequestException as e:
-        print(f"Erro na requisição para a API Gemini: {e}")
+        logging.error(f"Erro na requisição para a API Gemini: {e}")
         return None, None
     except json.JSONDecodeError as e:
-        print(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
+        logging.error(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
         return None, None
     except Exception as e:
-        print(f"Erro geral na transcrição com Gemini: {e}")
+        logging.error(f"Erro geral na transcrição com Gemini: {e}")
         return None, None
 
 def generate_text_gemini(prompt):
@@ -265,14 +279,14 @@ def generate_text_gemini(prompt):
         try:
             return result["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError):
-            print("Erro ao extrair o texto da resposta da API Gemini.")
-            print("Resposta completa do Gemini:", result)
+            logging.error("Erro ao extrair o texto da resposta da API Gemini.")
+            logging.error("Resposta completa do Gemini:", result)
             return None
     except requests.exceptions.RequestException as e:
-        print(f"Erro na requisição à API Gemini: {e}")
+        logging.error(f"Erro na requisição à API Gemini: {e}")
         return None
     except json.JSONDecodeError as e:
-        print(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
+        logging.error(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
         return None
 
 def clear_output_directory():
@@ -296,6 +310,7 @@ def extract_video_id(url):
         return None
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     clear_output_directory()  # Clear the output directory at the start
     # 0. Escolher a fonte do áudio
     print("Escolha uma opção:")

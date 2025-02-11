@@ -13,7 +13,7 @@ from main import (record_audio, download_audio_from_youtube,
 
 class TranscriptionThread(QThread):
     """Background thread for audio transcription"""
-    transcription_complete = pyqtSignal(str)
+    transcription_complete = pyqtSignal(object)
     error_occurred = pyqtSignal(str)
 
     def __init__(self, audio_file):
@@ -23,8 +23,13 @@ class TranscriptionThread(QThread):
     def run(self):
         try:
             # Perform transcription
-            transcript = transcribe_audio_gemini(self.audio_file)
-            self.transcription_complete.emit(transcript)
+            result = transcribe_audio_gemini(self.audio_file)
+            
+            # Emit the result
+            if result is not None:
+                self.transcription_complete.emit(result)
+            else:
+                self.error_occurred.emit("Transcription failed. No result returned.")
         except Exception as e:
             self.error_occurred.emit(str(e))
 
@@ -149,11 +154,19 @@ class SpeechToTextApp(QMainWindow):
         self.transcript_thread.error_occurred.connect(self.show_transcription_error)
         self.transcript_thread.start()
 
-    def update_transcript(self, transcript):
-        self.transcript_display.setPlainText(transcript)
+    def update_transcript(self, result):
+        # Handle tuple return from transcription
+        if isinstance(result, tuple):
+            transcript, _ = result
+            if transcript:
+                self.transcript_display.setPlainText(transcript)
+            else:
+                self.show_transcription_error("No transcript could be generated.")
+        else:
+            self.transcript_display.setPlainText(str(result))
 
     def show_transcription_error(self, error):
-        QMessageBox.warning(self, 'Transcription Error', error)
+        QMessageBox.warning(self, 'Transcription Error', str(error))
 
     def export_transcript(self):
         transcript = self.transcript_display.toPlainText()
