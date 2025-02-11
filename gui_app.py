@@ -317,10 +317,31 @@ class SpeechToTextApp(QMainWindow):
                 QMessageBox.warning(self, 'Export Error', str(e))
 
 def main():
-    app = QApplication(sys.argv)
-    ex = SpeechToTextApp()
-    ex.show()
-    sys.exit(app.exec_())
+    """
+    Main entry point for the Speech-to-Text GUI application.
+    Handles application initialization and error logging.
+    """
+    import logging
+    
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO, 
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(),  # Output to console
+            logging.FileHandler('speech2text_gui.log')  # Output to log file
+        ]
+    )
+    
+    try:
+        app = QApplication(sys.argv)
+        ex = SpeechToTextApp()
+        ex.show()
+        sys.exit(app.exec_())
+    except Exception as e:
+        logging.error(f"Fatal error in main application: {e}", exc_info=True)
+        print(f"Fatal error: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
