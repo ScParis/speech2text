@@ -4,3 +4,6 @@ yt-dlp
 tqdm
 ffmpeg-python
 google-auth
+PyQt5
+PyQtWebEngine
+qtawesome
