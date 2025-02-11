@@ -341,7 +341,7 @@ if __name__ == "__main__":
     print(f"Áudio convertido para MP3 e salvo em {audio_file_mp3} em {conversion_time:.2f} segundos")
 
     # 2. Transcrever o áudio (usando a API Gemini)
-    print("Transcrevendo o áudio com a API Gemini...")
+    print("\nTranscrevendo o áudio com a API Gemini...")
     start_time = time.time()
     transcricao_original, transcription_time = transcribe_audio_gemini(audio_file_mp3) # Usar o arquivo MP3
 
@@ -352,21 +352,21 @@ if __name__ == "__main__":
 
         if transcricao_corrigida:
             print(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
-            print(f"Tempo de transcrição: {transcription_time:.2f} segundos")
+            print(f"\nTempo de transcrição: {transcription_time:.2f} segundos")
         else:
             print("Falha ao corrigir a transcrição com o Gemini.")
-   # if transcricao_original:
-   #     print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
-#
-   #     # 3. Aprimorar a transcrição com o Gemini (opcional)
-   #     prompt = f"Corrija a gramática, a ortografia e o estilo do seguinte texto:\n{transcricao_original}"
-   #     texto_gerado = generate_text_gemini(prompt)
-#
-   #     if texto_gerado:
-   #          print(f"Transcrição aprimorada (Gemini):\n{texto_gerado}")
-   #     else:
-   #          print("Falha ao aprimorar a transcrição com o Gemini.")
-   #     print("Aprimoramento com Gemini desativado por enquanto.")
-   # else:
-   #     print("Falha ao transcrever o áudio com a API Gemini.")
+    if transcricao_original:
+        print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
+
+        # 3. Aprimorar a transcrição com o Gemini (opcional)
+        prompt = f"Corrija a gramática, a ortografia e o estilo do seguinte texto:\n{transcricao_original}"
+        texto_gerado = generate_text_gemini(prompt)
+
+        if texto_gerado:
+            print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
+        else:
+             print("Falha ao aprimorar a transcrição com o Gemini.")
+        print("Aprimoramento com Gemini desativado por enquanto.")
+    else:
+        print("Falha ao transcrever o áudio com a API Gemini.")
    
