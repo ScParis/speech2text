@@ -128,5 +128,10 @@ Aqui estão alguns problemas comuns e suas soluções:
 - **Erro de gravação de áudio**: Verifique se o microfone está conectado e configurado corretamente nas configurações do sistema.
 - **Problemas de instalação de dependências**: Certifique-se de que o `pip` e o `python` estão atualizados e que você está usando um ambiente virtual.
 
-### License
-Este projeto está licenciado sob a MIT License.
+### Licença
+
+Este projeto está licenciado sob a Licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
+
+- Você pode usar, copiar, modificar e distribuir este software
+- Não há garantias, use por sua conta e risco
+- Atribuição ao autor original é apreciada, mas não obrigatória
