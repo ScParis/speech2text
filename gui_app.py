@@ -25,8 +25,8 @@ class APIConfigDialog(QDialog):
         # API URL Input
         self.api_url_input = QLineEdit()
         self.api_url_input.setPlaceholderText('Enter Gemini API URL')
-        self.api_url_input.setText(os.getenv('GEMINI_API_URL', 
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'))
+        default_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent'
+        self.api_url_input.setText(os.getenv('GEMINI_API_URL', default_url))
         layout.addRow('API URL:', self.api_url_input)
         
         # API Key Input
@@ -46,23 +46,55 @@ class APIConfigDialog(QDialog):
         
         self.setLayout(layout)
     
-    def accept(self):
-        # Validate and save configuration
+    def validate_inputs(self):
+        """Validate API configuration inputs"""
         api_url = self.api_url_input.text().strip()
         api_key = self.api_key_input.text().strip()
         
-        if not api_url or not api_key:
-            QMessageBox.warning(self, 'Validation Error', 
-                                'Both API URL and API Key are required.')
+        # Basic validation
+        if not api_url:
+            QMessageBox.warning(self, 'Validation Error', 'API URL cannot be empty')
+            return False
+        
+        if not api_key:
+            QMessageBox.warning(self, 'Validation Error', 'API Key cannot be empty')
+            return False
+        
+        # URL validation (basic check)
+        if not api_url.startswith('https://'):
+            QMessageBox.warning(self, 'Validation Error', 'API URL must start with https://')
+            return False
+        
+        return True
+    
+    def accept(self):
+        """Handle configuration save"""
+        # Validate inputs
+        if not self.validate_inputs():
             return
+        
+        # Get configuration values
+        api_url = self.api_url_input.text().strip()
+        api_key = self.api_key_input.text().strip()
         
         try:
             # Update configuration
-            update_gemini_config(api_url, api_key)
-            super().accept()
+            from config import update_gemini_config
+            if update_gemini_config(api_url, api_key):
+                # Close dialog on successful configuration
+                super().accept()
+            else:
+                QMessageBox.critical(
+                    self, 
+                    'Configuration Error', 
+                    'Failed to save API configuration. Please check your inputs.'
+                )
         except Exception as e:
-            QMessageBox.critical(self, 'Configuration Error', 
-                                 f'Failed to save configuration: {str(e)}')
+            QMessageBox.critical(
+                self, 
+                'Configuration Error', 
+                f'An unexpected error occurred: {str(e)}'
+            )
 
 class TranscriptionThread(QThread):
     """Background thread for audio transcription"""
