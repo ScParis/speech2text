@@ -271,8 +271,7 @@ def convert_to_mp3(input_file, output_file):
 
 def correct_transcript_gemini(transcript):
     """Corrigir a transcrição com o Gemini."""
-    prompt = f"""Corrija a ortografia e gramática do texto a seguir. Certifique-se de que o nome da empresa seja sempre "PipeRun", e não "Papurã" ou qualquer outra variação.
-    {transcript}
+    prompt = f"""Corrija a ortografia e gramática do texto a seguir. Coloque muita atenção e certifique-se de que o nome da empresa seja sempre "PipeRun", e não "Papurã" ou "Parque Burle" ou qualquer outra variação.{transcript}
     """
     corrected_transcript = generate_text_gemini(prompt)
 
@@ -510,6 +509,22 @@ if __name__ == "__main__":
             logging.info(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
             logging.info(f"\nTempo de transcrição: {transcription_time:.2f} segundos")
         else:
+<<<<<<< HEAD
             logging.error("Falha ao corrigir a transcrição com o Gemini.")
+=======
+            print("Falha ao corrigir a transcrição com o Gemini.")
+    if transcricao_original:
+        print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
+
+        # 3. Aprimorar a transcrição com o Gemini (opcional)
+        prompt = f"Traduza para Português e corrija a gramática, a ortografia e o estilo do seguinte texto, aproveitando para dar seu resumo e etendimentos. Texto:\n{transcricao_original}"
+        texto_gerado = generate_text_gemini(prompt)
+
+        if texto_gerado:
+            print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
+        else:
+             print("Falha ao aprimorar a transcrição com o Gemini.")
+        print("Aprimoramento com Gemini desativado por enquanto.")
+>>>>>>> df42b39 (Atualizando o prompt de Transcrição aprimorada (Gemini))
     else:
         logging.error("Falha ao transcrever o áudio com a API Gemini.")
