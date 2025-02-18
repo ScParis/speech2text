@@ -509,9 +509,9 @@ if __name__ == "__main__":
             logging.info(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
             logging.info(f"\nTempo de transcrição: {transcription_time:.2f} segundos")
         else:
-<<<<<<< HEAD
+
             logging.error("Falha ao corrigir a transcrição com o Gemini.")
-=======
+
             print("Falha ao corrigir a transcrição com o Gemini.")
     if transcricao_original:
         print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
@@ -525,6 +525,6 @@ if __name__ == "__main__":
         else:
              print("Falha ao aprimorar a transcrição com o Gemini.")
         print("Aprimoramento com Gemini desativado por enquanto.")
->>>>>>> df42b39 (Atualizando o prompt de Transcrição aprimorada (Gemini))
+
     else:
         logging.error("Falha ao transcrever o áudio com a API Gemini.")
