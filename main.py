@@ -41,6 +41,7 @@ if not os.path.exists(OUTPUT_DIR):
 WAVE_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.wav")
 MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
 WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
+YOUTUBE_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "youtube_audio.webm")
 
 # Configurações da API Gemini (Carregadas do config.py)
 GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
@@ -109,12 +110,12 @@ def record_audio():
         logging.error(f"Erro durante a gravação de áudio: {e}")
         return None
 
-def download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm"):
+def download_audio_from_youtube(youtube_url):
     """Baixa o áudio de um vídeo do YouTube e salva em um arquivo WEBM."""
     try:
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': output_filename,
+            'outtmpl': YOUTUBE_AUDIO_FILENAME,  # Salva na pasta output_files
             'extractaudio': True,
             'audioformat': 'webm',
             'noplaylist': True,
@@ -130,30 +131,20 @@ def download_audio_from_youtube(youtube_url, output_filename="youtube_audio.webm
         
         download_time = time.time() - start_time_download
         logging.info(f"Download de áudio do YouTube concluído em {download_time:.2f} segundos")
-        return output_filename, download_time
+        return YOUTUBE_AUDIO_FILENAME, download_time  # Retorna o caminho completo
     except Exception as e:
         logging.error(f"Erro ao baixar o áudio do YouTube: {e}")
         return None, None
 
-def clear_output_directory(max_files=10):
+def clear_output_directory():
     """
-    Remove arquivos antigos do diretório de saída.
-    Mantém os últimos 'max_files' arquivos.
+    Remove todos os arquivos do diretório de saída.
     """
     try:
-        files = [os.path.join(OUTPUT_DIR, f) for f in os.listdir(OUTPUT_DIR) 
-                 if os.path.isfile(os.path.join(OUTPUT_DIR, f))]
-        
-        # Ordenar arquivos por data de modificação
-        files.sort(key=os.path.getmtime, reverse=True)
-        
-        # Excluir arquivos extras
-        for file in files[max_files:]:
-            try:
-                os.unlink(file)
-                logging.info(f"Arquivo antigo removido: {file}")
-            except Exception as e:
-                logging.warning(f"Não foi possível remover {file}: {e}")
+        if os.path.exists(OUTPUT_DIR):
+            shutil.rmtree(OUTPUT_DIR)  # Remove o diretório e seu conteúdo
+        os.makedirs(OUTPUT_DIR)          # Recria o diretório
+        logging.info(f"Diretório de saída limpo: {OUTPUT_DIR}")
     except Exception as e:
         logging.error(f"Erro ao limpar diretório de saída: {e}")
 
@@ -378,8 +369,8 @@ def generate_text_gemini(prompt):
         return None
 
 if __name__ == "__main__":
-    clear_output_directory()  # Limpar diretório de saída no início
-
+    # Limpar diretório de saída no início
+    clear_output_directory()
     # Função para solicitar entrada do usuário com validação
     def get_user_input(prompt, validation_func=None, error_message=None):
         while True:
