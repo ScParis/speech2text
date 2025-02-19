@@ -12,3 +12,4 @@ __pycache__/
 *.class
 /backup/
 .log
+output_files/
