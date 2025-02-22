@@ -42,6 +42,7 @@ WAVE_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.wav")
 MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
 WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 YOUTUBE_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "youtube_audio.webm")
+VIDEO_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "video_audio.wav")
 
 # Configurações da API Gemini (Carregadas do config.py)
 GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
@@ -134,6 +135,32 @@ def download_audio_from_youtube(youtube_url):
         return YOUTUBE_AUDIO_FILENAME, download_time  # Retorna o caminho completo
     except Exception as e:
         logging.error(f"Erro ao baixar o áudio do YouTube: {e}")
+        return None, None
+
+def extract_audio_from_video(video_file, output_file):
+    """Extrai o áudio de um arquivo de vídeo usando ffmpeg."""
+    try:
+        start_time_extraction = time.time()
+        subprocess.run([
+            "ffmpeg",
+            "-i", video_file,
+            "-vn",  # Sem vídeo
+            "-acodec", "pcm_s16le",  # Codec WAV
+            "-ar", "8000",  # Taxa de amostragem
+            "-ac", "1",  # Mono
+            output_file
+        ], check=True, capture_output=True, text=True, timeout=600)  # Limite de tempo de 10 minutos
+        extraction_time = time.time() - start_time_extraction
+        logging.info(f"Áudio extraído do vídeo e salvo em {output_file} em {extraction_time:.2f} segundos")
+        return output_file, extraction_time
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Erro ao extrair o áudio do vídeo: {e.stderr}")
+        return None, None
+    except subprocess.TimeoutExpired:
+        logging.error("Tempo limite excedido ao extrair o áudio do vídeo.")
+        return None, None
+    except FileNotFoundError:
+        logging.error("Erro: ffmpeg não encontrado. Certifique-se de que o ffmpeg está instalado e acessível através da linha de comando.")
         return None, None
 
 def clear_output_directory():
@@ -368,6 +395,14 @@ def generate_text_gemini(prompt):
         logging.error(f"Erro ao decodificar a resposta JSON da API Gemini: {e}")
         return None
 
+def validate_video_file(file_path):
+    """Valida se o arquivo é um arquivo de vídeo com extensões comuns."""
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']  # Adicione mais se necessário
+    return (
+        os.path.isfile(file_path) and
+        any(file_path.lower().endswith(ext) for ext in video_extensions)
+    )
+
 if __name__ == "__main__":
     # Limpar diretório de saída no início
     clear_output_directory()
@@ -394,12 +429,13 @@ if __name__ == "__main__":
     logging.info("1. Gravar áudio do microfone")
     logging.info("2. Carregar arquivo de áudio local")
     logging.info("3. Baixar áudio do YouTube (vídeo, música, shorts)")
-    
+    logging.info("4. Enviar arquivo de vídeo para transcrição")
+
     # Solicitar opção com validação
     opcao = get_user_input(
-        "Digite 1, 2 ou 3: ", 
-        validation_func=lambda x: x in ['1', '2', '3'],
-        error_message="Por favor, escolha 1, 2 ou 3."
+        "Digite 1, 2, 3 ou 4: ",
+        validation_func=lambda x: x in ['1', '2', '3', '4'],
+        error_message="Por favor, escolha 1, 2, 3 ou 4."
     )
 
     # Variável para armazenar o caminho do arquivo de áudio
@@ -464,6 +500,25 @@ if __name__ == "__main__":
         
         logging.info(f"Áudio do YouTube baixado e salvo em {audio_file} em {download_time:.2f} segundos")
 
+    elif opcao == "4":
+        # Enviar arquivo de vídeo para transcrição
+        video_file = get_user_input(
+            "Digite o caminho completo para o arquivo de vídeo: ",
+            validation_func=validate_video_file,
+            error_message="Arquivo de vídeo inválido ou não encontrado. Verifique o caminho e a extensão."
+        )
+
+        logging.info(f"Arquivo de vídeo especificado: {video_file}")
+
+        # Extrair áudio do vídeo
+        audio_file, extraction_time = extract_audio_from_video(video_file, VIDEO_AUDIO_FILENAME)
+
+        if not audio_file:
+            logging.error("Falha ao extrair o áudio do vídeo. Saindo.")
+            exit(1)
+
+        logging.info(f"Áudio extraído do vídeo e salvo em {audio_file} em {extraction_time:.2f} segundos")
+
     # Processamento comum para todas as opções
     # Reduzir taxa de amostragem
     audio_file_reduced, conversion_time = reduce_sample_rate(audio_file, WAVE_OUTPUT_FILENAME_REDUCED, 8000)
@@ -497,7 +552,7 @@ if __name__ == "__main__":
         transcricao_corrigida = correct_transcript_gemini(transcricao_original)
 
         if transcricao_corrigida:
-            logging.info(f"Transcrição corrigida (Gemini):\n{transcricao_corrigida}\n")
+            logging.info(f"\nTranscrição corrigida (Gemini):\n{transcricao_corrigida}\n")
             logging.info(f"\nTempo de transcrição: {transcription_time:.2f} segundos")
         else:
 
@@ -505,17 +560,17 @@ if __name__ == "__main__":
 
             print("Falha ao corrigir a transcrição com o Gemini.")
     if transcricao_original:
-        print(f"Transcrição original (Gemini):\n{transcricao_original}\n")
+        print(f"\nTranscrição original (Gemini):\n{transcricao_original}\n")
 
         # 3. Aprimorar a transcrição com o Gemini (opcional)
-        prompt = f"Traduza para Português e corrija a gramática, a ortografia e o estilo do seguinte texto, aproveitando para dar seu resumo e etendimentos. Texto:\n{transcricao_original}"
+        prompt = f"Traduza para Português e corrija a gramática, a ortografia e o estilo do seguinte texto. Faça uma análise profunda e apresente um resumo e percepções sobre o Texto:\n{transcricao_original}"
         texto_gerado = generate_text_gemini(prompt)
 
         if texto_gerado:
             print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
         else:
              print("Falha ao aprimorar a transcrição com o Gemini.")
-        print("Aprimoramento com Gemini desativado por enquanto.")
+            # print("Aprimoramento com Gemini desativado por enquanto.")
 
     else:
         logging.error("Falha ao transcrever o áudio com a API Gemini.")
