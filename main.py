@@ -48,6 +48,7 @@ WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 YOUTUBE_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "youtube_audio.webm")
 VIDEO_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "video_audio.wav")
 TIKTOK_VIDEO_FILENAME = os.path.join(OUTPUT_DIR, "tiktok_video.mp4")
+INSTAGRAM_VIDEO_FILENAME = os.path.join(OUTPUT_DIR, "instagram_video.mp4")
 
 # Configurações da API Gemini (Carregadas do config.py)
 GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
@@ -223,6 +224,44 @@ def download_tiktok_video(tiktok_url):
         logging.error(f"Erro ao baixar o vídeo do TikTok: {e}")
         return None, None
 
+def download_instagram_story(instagram_url, username=None, password=None):
+    """Baixa o vídeo de um link do Instagram Stories."""
+    try:
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': INSTAGRAM_VIDEO_FILENAME,  # Caminho para salvar o vídeo
+            'noplaylist': True,
+            'nocheckcertificate': True,  # Ignorar erros de certificado
+            'quiet': True,  # Modo silencioso
+            'no_warnings': True,
+            'logger': MyLogger(),
+            'progress_hooks': [],
+            'force': True,
+            'http_header': {  # Adicionar cabeçalhos HTTP
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+            }
+        }
+
+        # Adicionar credenciais se fornecidas
+        if username and password:
+            ydl_opts['username'] = username
+            ydl_opts['password'] = password
+
+        start_time_download = time.time()
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([instagram_url])
+        download_time = time.time() - start_time_download
+        logging.info(f"Vídeo do Instagram baixado com sucesso em {download_time:.2f} segundos")
+        return INSTAGRAM_VIDEO_FILENAME, download_time
+    except Exception as e:
+        logging.error(f"Erro ao baixar o vídeo do Instagram: {e}")
+        if "You need to log in to access this content" in str(e):
+            logging.error("O vídeo do Instagram é privado e requer login. Por favor, forneça suas credenciais.")
+            print("O vídeo do Instagram é privado e requer login. Por favor, forneça suas credenciais.")
+        return None, None
+
 def extract_audio_from_video(video_file, output_file):
     """Extrai o áudio de um arquivo de vídeo usando ffmpeg."""
     try:
@@ -300,7 +339,7 @@ def convert_to_mp3(input_file, output_file):
 
 def correct_transcript_gemini(transcript):
     """Corrigir a transcrição com o Gemini."""
-    prompt = f"""Corrija a ortografia e gramática do texto a seguir. Coloque muita atenção e certifique-se de que o nome da empresa seja sempre "PipeRun", e não "Papurã" ou "Parque Burle" ou qualquer outra variação.{transcript}
+    prompt = f"""Corrija a ortografia e gramática do texto a seguir, e garanta que o texto está completo e de acordo com o audio original.{transcript}
     """
     corrected_transcript = generate_text_gemini(prompt)
 
@@ -313,6 +352,7 @@ def correct_transcript_gemini(transcript):
 def transcribe_audio_gemini(audio_file):
     """Transcreve um arquivo de áudio usando a API Gemini."""
     try:
+        global MP3_OUTPUT_FILENAME
         with open(audio_file, "rb") as f:
             audio_data = f.read()
 
@@ -430,605 +470,28 @@ def validate_audio_file(file_path):
         mime_type and mime_type.startswith('audio/')
     )
 
-def identify_platform(url):
-    """Identifica a plataforma da URL."""
-    if is_valid_youtube_url(url):
-        return "YouTube"
-    elif is_valid_tiktok_url(url):
-        return "TikTok"
-    elif is_valid_url(url):
-        return "Generic"
-    else:
-        return None
-
-def process_transcription(audio_file):
-    """Processa a transcrição do áudio, incluindo redução da taxa de amostragem, conversão para MP3 e transcrição com a API Gemini."""
-    try:
-        # Reduzir taxa de amostragem
-        audio_file_reduced, conversion_time = reduce_sample_rate(audio_file, WAVE_OUTPUT_FILENAME_REDUCED, 8000)
-        if not audio_file_reduced:
-            logging.error("Falha ao reduzir a taxa de amostragem.")
-            return None
-        logging.info(f"Áudio com taxa de amostragem reduzida e salvo em {audio_file_reduced} em {conversion_time:.2f} segundos")
-
-        # Converter para MP3
-        output_dir = os.path.dirname(MP3_FILENAME)
-        os.makedirs(output_dir, exist_ok=True)
-
-        audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_FILENAME)
-        if not audio_file_mp3:
-            logging.error("Falha ao converter para MP3.")
-            return None
-        logging.info(f"Áudio convertido para MP3 e salvo em {audio_file_mp3} em {conversion_time:.2f} segundos")
-
-        # Transcrever o áudio
-        logging.info("\nTranscrevendo o áudio com a API Gemini...")
-        transcricao_original, transcription_time = transcribe_audio_gemini(audio_file_mp3)
-        return transcricao_original
-    except Exception as e:
-        logging.error(f"Erro durante o processo de transcrição: {e}")
-        return None
-
-def improve_transcript(transcricao_original):
-    """Melhora a transcrição original com o Gemini."""
-    prompt = f"Traduza para Português e corrija a gramática, a ortografia e o estilo do seguinte texto. Faça uma análise profunda e apresente um resumo e percepções sobre o Texto:\n{transcricao_original}"
-    texto_gerado = generate_text_gemini(prompt)
-    return texto_gerado
-
-def main():
-    """Função principal para iniciar o processo."""
-    global continue_processing
-
-    # Limpar diretório de saída
-    clear_output_directory()
-
-    # Loop principal
-    while continue_processing:
-        # Menu de opções
-        logging.info("Escolha uma opção de entrada:")
-        logging.info("1. Gravação de voz")
-        logging.info("2. Envio de arquivo (áudio ou vídeo)")
-        logging.info("3. Envio de link")
-
-        # Solicitar opção com validação e timeout
-        opcao = get_user_input(
-            "Digite 1, 2 ou 3: ",
-            validation_func=lambda x: x in ['1', '2', '3'],
-            error_message="Por favor, escolha 1, 2 ou 3.",
-            timeout=15  # Timeout para a escolha da opção
-        )
-
-        if opcao is None:
-            continue_processing = False  # Encerra a execução se o tempo limite for atingido
-            break
-
-        audio_file = None  # Inicializa audio_file aqui
-
-        if opcao == "1":
-            # Gravação de voz
-            logging.info("Preparando para gravar. Certifique-se de que o microfone está conectado.")
-            audio_file = record_audio()
-            if not audio_file:
-                logging.error("Falha na gravação de áudio. Saindo.")
-                continue_processing = False  # Encerra a execução
-                break
-            record_time = time.time() - start_time
-            logging.info(f"Áudio gravado e salvo em {audio_file} em {record_time:.2f} segundos")
-
-        elif opcao == "2":
-            # Envio de arquivo (áudio ou vídeo)
-            file_path = get_user_input(
-                "Digite o caminho completo para o arquivo (áudio ou vídeo): ",
-                validation_func=lambda x: validate_audio_file(x) or validate_video_file(x),
-                error_message="Arquivo inválido ou não encontrado. Verifique o caminho e a extensão.",
-                timeout=15  # Adicionado timeout de 15 segundos
-            )
-            if not file_path:
-                print("Entrada inválida ou tempo limite excedido.")
-                continue_processing = False  # Encerra a execução
-                break
-
-            logging.info(f"Arquivo especificado: {file_path}")
-            if validate_video_file(file_path):
-                audio_file, extraction_time = extract_audio_from_video(file_path, VIDEO_AUDIO_FILENAME)
-                if not audio_file:
-                    logging.error("Falha ao extrair o áudio do vídeo. Saindo.")
-                    continue_processing = False  # Encerra a execução
-                    break
-                logging.info(f"Áudio extraído do vídeo e salvo em {audio_file} em {extraction_time:.2f} segundos")
-            elif validate_audio_file(file_path):
-                audio_file = file_path
-            else:
-                logging.error("Formato de arquivo não suportado.")
-                print("Formato de arquivo não suportado.")
-                continue_processing = False  # Encerra a execução
-                break
-
-        elif opcao == "3":
-            # Envio de link
-            url = get_user_input(
-                "Digite a URL da plataforma: ",
-                validation_func=is_valid_url,
-                error_message="URL inválida. Verifique o link.",
-                timeout=15  # Adicionado timeout de 15 segundos
-            )
-            if not url:
-                print("Entrada inválida ou tempo limite excedido.")
-                continue_processing = False  # Encerra a execução
-                break
-
-            platform = identify_platform(url)
-            logging.info(f"Identificada plataforma: {platform}")
-
-            try:
-                # Tratamento para YouTube
-                if platform == "YouTube":
-                    username = get_user_input("Digite o nome de usuário (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
-                    password = get_user_input("Digite a senha (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
-                    if username and password:
-                        audio_file, download_time = download_with_credentials(url, username, password)
-                    else:
-                        audio_file, download_time = download_audio_from_youtube(url)
-                    
-                    if not audio_file:
-                        logging.error("Falha ao baixar o áudio do YouTube. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                        break
-                    logging.info(f"Áudio do YouTube baixado e salvo em {audio_file} em {download_time:.2f} segundos")
-
-                # Tratamento para TikTok
-                elif platform == "TikTok":
-                    audio_file, download_time = download_tiktok_video(url)
-                    if not audio_file:
-                        logging.error("Falha ao baixar o vídeo do TikTok. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                        break
-
-                    audio_file, extraction_time = extract_audio_from_video(audio_file, VIDEO_AUDIO_FILENAME)
-                    if not audio_file:
-                        logging.error("Falha ao extrair áudio do vídeo do TikTok. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                    logging.info(f"Áudio extraído do vídeo do TikTok e salvo em {audio_file} em {extraction_time:.2f} segundos")
-                # Outras plataformas
-                else:
-                    print("Plataforma não suportada")
-                    continue_processing = False  # Encerra a execução
-                    break
-
-            except Exception as e:
-                logging.error(f"Ocorreu um erro ao processar o link: {e}")
-                print(f"Ocorreu um erro ao processar o link: {e}")
-                continue_processing = False  # Encerra a execução
-                break
-
-        else:
-            logging.error("Opção inválida.")
-            print("Opção inválida.")
-            continue_processing = False  # Encerra a execução
-            break
-
-        if not audio_file:
-            print("Falha ao obter o arquivo de áudio. Encerrando.")
-            continue_processing = False  # Encerra a execução
-            break
-
-        # Processar a transcrição
-        try:
-            transcricao_original = process_transcription(audio_file)
-
-            if transcricao_original:
-                logging.info("Aprimorando a transcrição com o Gemini...\n")
-                texto_gerado = improve_transcript(transcricao_original)
-                if texto_gerado:
-                    print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
-                else:
-                    print("Falha ao aprimorar a transcrição com o Gemini.")
-            else:
-                logging.error("Falha ao obter transcrição original.")
-
-        except Exception as e:
-            logging.error(f"Ocorreu um erro durante o processamento: {e}")
-
-        # Finalizar o processo e aguardar a resposta do usuário por 10 segundos
-        def finalizar_apos_timeout():
-            global continue_processing
-            print("\nNenhuma interação detectada. Finalizando a execução.")
-            continue_processing = False
-
-        timer = threading.Timer(10.0, finalizar_apos_timeout)
-        timer.start()
-
-        user_choice = get_user_input(
-            "\nDeseja realizar novo envio (s/n)? ",
-            validation_func=lambda x: x.lower() in ['s', 'n'],
-            error_message="Por favor, digite 's' para sim ou 'n' para não.",
-            timeout=10  # Timeout para a escolha do usuário
-        )
-        if timer.is_alive():
-            timer.cancel()
-        
-        if user_choice is None or user_choice.lower() == 'n':
-            print("Finalizando a execução.")
-            continue_processing = False
-
-    logging.info("Execução finalizada.")
-
-# Funções auxiliares
-def clear_output_directory():
-    """
-    Remove todos os arquivos do diretório de saída.
-    """
-    try:
-        if os.path.exists(OUTPUT_DIR):
-            shutil.rmtree(OUTPUT_DIR)  # Remove o diretório e seu conteúdo
-        os.makedirs(OUTPUT_DIR)          # Recria o diretório
-        logging.info(f"Diretório de saída limpo: {OUTPUT_DIR}")
-    except Exception as e:
-        logging.error(f"Erro ao limpar diretório de saída: {e}")
-
-def is_valid_youtube_url(url):
-    """
-    Valida se a URL é de um vídeo do YouTube, incluindo variações como:
-    - Links curtos (youtu.be)
-    - Links com parâmetros de compartilhamento
-    - Links do YouTube Music
-    - Links com timestamp
-    """
-    youtube_regex_patterns = [
-        # Padrão completo do YouTube
-        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})',
-        
-        # Links curtos do YouTube (youtu.be)
-        r'https?://(?:www\.)?youtu\.be/([^&\?]+)',
-        
-        # YouTube Music
-        r'(https?://)?(music\.youtube\.com)/(watch\?v=|embed/|v/)?([^&=%\?]{11})',
-        
-        # Links com parâmetros adicionais
-        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/)?([^&=%\?]{11})(\?.*)?'
-    ]
-    
-    for pattern in youtube_regex_patterns:
-        match = re.match(pattern, url)
-        if match:
-            return True
-    return False
-
-def is_valid_tiktok_url(url):
-    """Valida se a URL é de um vídeo do TikTok."""
-    tiktok_regex = r'https?://(?:m|www|vm)\.tiktok\.com/(?:.+/)?(?:video/)?([0-9]+)'
-    match = re.match(tiktok_regex, url)
+def is_valid_instagram_story_url(url):
+    """Valida se a URL é de um Story do Instagram."""
+    instagram_story_regex = r'https?://(?:www\.)?instagram\.com/stories/[a-zA-Z0-9_.]+/([0-9]+)/'
+    match = re.match(instagram_story_regex, url)
     return bool(match)
 
-def is_valid_url(url):
-    """Valida se a string é uma URL."""
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except:
-        return False
-
-def validate_audio_file(file_path):
-    """Valida se o arquivo é de áudio, verificando a extensão e o tipo MIME."""
-    audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.m4a', '.webm']
-    mime_type, _ = mimetypes.guess_type(file_path)
-    return (
-        os.path.isfile(file_path) and
-        any(file_path.lower().endswith(ext) for ext in audio_extensions) and
-        mime_type and mime_type.startswith('audio/')
-    )
-
-def validate_video_file(file_path):
-    """Valida se o arquivo é um arquivo de vídeo com extensões comuns."""
-    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']  # Adicione mais se necessário
-    return (
-        os.path.isfile(file_path) and
-        any(file_path.lower().endswith(ext) for ext in video_extensions)
-    )
-
-def identify_platform(url):
-    """Identifica a plataforma da URL."""
-    if is_valid_youtube_url(url):
-        return "YouTube"
-    elif is_valid_tiktok_url(url):
-        return "TikTok"
-    elif is_valid_url(url):
-        return "Generic"
-    else:
-        return None
-
-def process_transcription(audio_file):
-    """Processa a transcrição do áudio, incluindo redução da taxa de amostragem, conversão para MP3 e transcrição com a API Gemini."""
-    try:
-        # Reduzir taxa de amostragem
-        audio_file_reduced, conversion_time = reduce_sample_rate(audio_file, WAVE_OUTPUT_FILENAME_REDUCED, 8000)
-        if not audio_file_reduced:
-            logging.error("Falha ao reduzir a taxa de amostragem.")
-            return None
-        logging.info(f"Áudio com taxa de amostragem reduzida e salvo em {audio_file_reduced} em {conversion_time:.2f} segundos")
-
-        # Converter para MP3
-        output_dir = os.path.dirname(MP3_FILENAME)
-        os.makedirs(output_dir, exist_ok=True)
-
-        audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_FILENAME)
-        if not audio_file_mp3:
-            logging.error("Falha ao converter para MP3.")
-            return None
-        logging.info(f"Áudio convertido para MP3 e salvo em {audio_file_mp3} em {conversion_time:.2f} segundos")
-
-        # Transcrever o áudio
-        logging.info("\nTranscrevendo o áudio com a API Gemini...")
-        transcricao_original, transcription_time = transcribe_audio_gemini(audio_file_mp3)
-        return transcricao_original
-    except Exception as e:
-        logging.error(f"Erro durante o processo de transcrição: {e}")
-        return None
-
-def improve_transcript(transcricao_original):
-    """Melhora a transcrição original com o Gemini."""
-    prompt = f"Traduza para Português e corrija a gramática, a ortografia e o estilo do seguinte texto. Faça uma análise profunda e apresente um resumo e percepções sobre o Texto:\n{transcricao_original}"
-    texto_gerado = generate_text_gemini(prompt)
-    return texto_gerado
-
-def main():
-    """Função principal para iniciar o processo."""
-    global continue_processing
-
-    # Limpar diretório de saída
-    clear_output_directory()
-
-    # Loop principal
-    while continue_processing:
-        # Menu de opções
-        logging.info("Escolha uma opção de entrada:")
-        logging.info("1. Gravação de voz")
-        logging.info("2. Envio de arquivo (áudio ou vídeo)")
-        logging.info("3. Envio de link")
-
-        # Solicitar opção com validação e timeout
-        opcao = get_user_input(
-            "Digite 1, 2 ou 3: ",
-            validation_func=lambda x: x in ['1', '2', '3'],
-            error_message="Por favor, escolha 1, 2 ou 3.",
-            timeout=15  # Timeout para a escolha da opção
-        )
-
-        if opcao is None:
-            continue_processing = False  # Encerra a execução se o tempo limite for atingido
-            break
-
-        audio_file = None  # Inicializa audio_file aqui
-
-        if opcao == "1":
-            # Gravação de voz
-            logging.info("Preparando para gravar. Certifique-se de que o microfone está conectado.")
-            audio_file = record_audio()
-            if not audio_file:
-                logging.error("Falha na gravação de áudio. Saindo.")
-                continue_processing = False  # Encerra a execução
-                break
-            record_time = time.time() - start_time
-            logging.info(f"Áudio gravado e salvo em {audio_file} em {record_time:.2f} segundos")
-
-        elif opcao == "2":
-            # Envio de arquivo (áudio ou vídeo)
-            file_path = get_user_input(
-                "Digite o caminho completo para o arquivo (áudio ou vídeo): ",
-                validation_func=lambda x: validate_audio_file(x) or validate_video_file(x),
-                error_message="Arquivo inválido ou não encontrado. Verifique o caminho e a extensão.",
-                timeout=15  # Adicionado timeout de 15 segundos
-            )
-            if not file_path:
-                print("Entrada inválida ou tempo limite excedido.")
-                continue_processing = False  # Encerra a execução
-                break
-
-            logging.info(f"Arquivo especificado: {file_path}")
-            if validate_video_file(file_path):
-                audio_file, extraction_time = extract_audio_from_video(file_path, VIDEO_AUDIO_FILENAME)
-                if not audio_file:
-                    logging.error("Falha ao extrair o áudio do vídeo. Saindo.")
-                    continue_processing = False  # Encerra a execução
-                    break
-                logging.info(f"Áudio extraído do vídeo e salvo em {audio_file} em {extraction_time:.2f} segundos")
-            elif validate_audio_file(file_path):
-                audio_file = file_path
-            else:
-                logging.error("Formato de arquivo não suportado.")
-                print("Formato de arquivo não suportado.")
-                continue_processing = False  # Encerra a execução
-                break
-
-        elif opcao == "3":
-            # Envio de link
-            url = get_user_input(
-                "Digite a URL da plataforma: ",
-                validation_func=is_valid_url,
-                error_message="URL inválida. Verifique o link.",
-                timeout=15  # Adicionado timeout de 15 segundos
-            )
-            if not url:
-                print("Entrada inválida ou tempo limite excedido.")
-                continue_processing = False  # Encerra a execução
-                break
-
-            platform = identify_platform(url)
-            logging.info(f"Identificada plataforma: {platform}")
-
-            try:
-                # Tratamento para YouTube
-                if platform == "YouTube":
-                    username = get_user_input("Digite o nome de usuário (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
-                    password = get_user_input("Digite a senha (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
-                    if username and password:
-                        audio_file, download_time = download_with_credentials(url, username, password)
-                    else:
-                        audio_file, download_time = download_audio_from_youtube(url)
-                    
-                    if not audio_file:
-                        logging.error("Falha ao baixar o áudio do YouTube. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                        break
-                    logging.info(f"Áudio do YouTube baixado e salvo em {audio_file} em {download_time:.2f} segundos")
-
-                # Tratamento para TikTok
-                elif platform == "TikTok":
-                    audio_file, download_time = download_tiktok_video(url)
-                    if not audio_file:
-                        logging.error("Falha ao baixar o vídeo do TikTok. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                        break
-
-                    audio_file, extraction_time = extract_audio_from_video(audio_file, VIDEO_AUDIO_FILENAME)
-                    if not audio_file:
-                        logging.error("Falha ao extrair áudio do vídeo do TikTok. Saindo.")
-                        continue_processing = False  # Encerra a execução
-                        break
-                    logging.info(f"Áudio extraído do vídeo do TikTok e salvo em {audio_file} em {extraction_time:.2f} segundos")
-                # Outras plataformas
-                else:
-                    print("Plataforma não suportada")
-                    continue_processing = False  # Encerra a execução
-                    break
-
-            except Exception as e:
-                logging.error(f"Ocorreu um erro ao processar o link: {e}")
-                print(f"Ocorreu um erro ao processar o link: {e}")
-                continue_processing = False  # Encerra a execução
-                break
-
-        else:
-            logging.error("Opção inválida.")
-            print("Opção inválida.")
-            continue_processing = False  # Encerra a execução
-            break
-
-        if not audio_file:
-            print("Falha ao obter o arquivo de áudio. Encerrando.")
-            continue_processing = False  # Encerra a execução
-            break
-
-        # Processar a transcrição
-        try:
-            transcricao_original = process_transcription(audio_file)
-
-            if transcricao_original:
-                logging.info("Aprimorando a transcrição com o Gemini...\n")
-                texto_gerado = improve_transcript(transcricao_original)
-                if texto_gerado:
-                    print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
-                else:
-                    print("Falha ao aprimorar a transcrição com o Gemini.")
-            else:
-                logging.error("Falha ao obter transcrição original.")
-
-        except Exception as e:
-            logging.error(f"Ocorreu um erro durante o processamento: {e}")
-
-        # Finalizar o processo e aguardar a resposta do usuário por 10 segundos
-        def finalizar_apos_timeout():
-            global continue_processing
-            print("\nNenhuma interação detectada. Finalizando a execução.")
-            continue_processing = False
-
-        timer = threading.Timer(10.0, finalizar_apos_timeout)
-        timer.start()
-
-        user_choice = get_user_input(
-            "\nDeseja realizar novo envio (s/n)? ",
-            validation_func=lambda x: x.lower() in ['s', 'n'],
-            error_message="Por favor, digite 's' para sim ou 'n' para não.",
-            timeout=10  # Timeout para a escolha do usuário
-        )
-        if timer.is_alive():
-            timer.cancel()
-        
-        if user_choice is None or user_choice.lower() == 'n':
-            print("Finalizando a execução.")
-            continue_processing = False
-
-    logging.info("Execução finalizada.")
-
-# Funções auxiliares
-def clear_output_directory():
-    """
-    Remove todos os arquivos do diretório de saída.
-    """
-    try:
-        if os.path.exists(OUTPUT_DIR):
-            shutil.rmtree(OUTPUT_DIR)  # Remove o diretório e seu conteúdo
-        os.makedirs(OUTPUT_DIR)          # Recria o diretório
-        logging.info(f"Diretório de saída limpo: {OUTPUT_DIR}")
-    except Exception as e:
-        logging.error(f"Erro ao limpar diretório de saída: {e}")
-
-def is_valid_youtube_url(url):
-    """
-    Valida se a URL é de um vídeo do YouTube, incluindo variações como:
-    - Links curtos (youtu.be)
-    - Links com parâmetros de compartilhamento
-    - Links do YouTube Music
-    - Links com timestamp
-    """
-    youtube_regex_patterns = [
-        # Padrão completo do YouTube
-        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})',
-        
-        # Links curtos do YouTube (youtu.be)
-        r'https?://(?:www\.)?youtu\.be/([^&\?]+)',
-        
-        # YouTube Music
-        r'(https?://)?(music\.youtube\.com)/(watch\?v=|embed/|v/)?([^&=%\?]{11})',
-        
-        # Links com parâmetros adicionais
-        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/)?([^&=%\?]{11})(\?.*)?'
-    ]
-    
-    for pattern in youtube_regex_patterns:
-        match = re.match(pattern, url)
-        if match:
-            return True
-    return False
-
-def is_valid_tiktok_url(url):
-    """Valida se a URL é de um vídeo do TikTok."""
-    tiktok_regex = r'https?://(?:m|www|vm)\.tiktok\.com/(?:.+/)?(?:video/)?([0-9]+)'
-    match = re.match(tiktok_regex, url)
+def is_valid_instagram_reel_url(url):
+    """Valida se a URL é de um Reel do Instagram."""
+    instagram_reel_regex = r'https?://(?:www\.)?instagram\.com/reels/([a-zA-Z0-9_-]+)/?'
+    match = re.match(instagram_reel_regex, url)
     return bool(match)
 
-def is_valid_url(url):
-    """Valida se a string é uma URL."""
-    try:
-        result = urlparse(url)
-        return all([result.scheme, result.netloc])
-    except:
-        return False
-
-def validate_audio_file(file_path):
-    """Valida se o arquivo é de áudio, verificando a extensão e o tipo MIME."""
-    audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.m4a', '.webm']
-    mime_type, _ = mimetypes.guess_type(file_path)
-    return (
-        os.path.isfile(file_path) and
-        any(file_path.lower().endswith(ext) for ext in audio_extensions) and
-        mime_type and mime_type.startswith('audio/')
-    )
-
-def validate_video_file(file_path):
-    """Valida se o arquivo é um arquivo de vídeo com extensões comuns."""
-    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']  # Adicione mais se necessário
-    return (
-        os.path.isfile(file_path) and
-        any(file_path.lower().endswith(ext) for ext in video_extensions)
-    )
-
 def identify_platform(url):
     """Identifica a plataforma da URL."""
     if is_valid_youtube_url(url):
         return "YouTube"
     elif is_valid_tiktok_url(url):
         return "TikTok"
+    elif is_valid_instagram_story_url(url):
+        return "Instagram Story"
+    elif is_valid_instagram_reel_url(url):
+        return "Instagram Reel"
     elif is_valid_url(url):
         return "Generic"
     else:
@@ -1045,10 +508,10 @@ def process_transcription(audio_file):
         logging.info(f"Áudio com taxa de amostragem reduzida e salvo em {audio_file_reduced} em {conversion_time:.2f} segundos")
 
         # Converter para MP3
-        output_dir = os.path.dirname(MP3_FILENAME)
+        output_dir = os.path.dirname(MP3_OUTPUT_FILENAME)
         os.makedirs(output_dir, exist_ok=True)
 
-        audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_FILENAME)
+        audio_file_mp3, conversion_time = convert_to_mp3(audio_file_reduced, MP3_OUTPUT_FILENAME)
         if not audio_file_mp3:
             logging.error("Falha ao converter para MP3.")
             return None
@@ -1068,6 +531,315 @@ def improve_transcript(transcricao_original):
     texto_gerado = generate_text_gemini(prompt)
     return texto_gerado
 
-# inicializa a variável no escopo global
+# Variável para controlar o loop principal
 continue_processing = True
+start_time = None  # Inicializa start_time aqui
+
+def main():
+    """Função principal para iniciar o processo."""
+    global continue_processing
+    global start_time  # Declara start_time como global
+
+    # Limpar diretório de saída
+    clear_output_directory()
+    start_time = time.time()  # Inicializa start_time aqui
+
+    # Loop principal
+    while continue_processing:
+        # Menu de opções
+        logging.info("Escolha uma opção de entrada:")
+        logging.info("1. Gravação de voz")
+        logging.info("2. Envio de arquivo (áudio ou vídeo)")
+        logging.info("3. Envio de link")
+
+        # Solicitar opção com validação e timeout
+        opcao = get_user_input(
+            "Digite 1, 2 ou 3: ",
+            validation_func=lambda x: x in ['1', '2', '3'],
+            error_message="Por favor, digite 1, 2 ou 3.",
+            timeout=15  # Timeout para a escolha da opção
+        )
+
+        if opcao is None:
+            continue_processing = False  # Encerra a execução se o tempo limite for atingido
+            break
+
+        audio_file = None  # Inicializa audio_file aqui
+
+        if opcao == "1":
+            # Gravação de voz
+            logging.info("Preparando para gravar. Certifique-se de que o microfone está conectado.")
+            audio_file = record_audio()
+            if not audio_file:
+                logging.error("Falha na gravação de áudio. Saindo.")
+                continue
+            record_time = time.time() - start_time
+            logging.info(f"Áudio gravado e salvo em {audio_file} em {record_time:.2f} segundos")
+
+        elif opcao == "2":
+            # Envio de arquivo (áudio ou vídeo)
+            file_path = get_user_input(
+                "Digite o caminho completo para o arquivo (áudio ou vídeo): ",
+                validation_func=lambda x: validate_audio_file(x) or validate_video_file(x),
+                error_message="Arquivo inválido ou não encontrado. Verifique o caminho e a extensão.",
+                timeout=15  # Adicionado timeout de 15 segundos
+        )
+            if not file_path:
+                print("Entrada inválida ou tempo limite excedido.")
+                continue
+ 
+            logging.info(f"Arquivo especificado: {file_path}")
+            if validate_video_file(file_path):
+                audio_file, extraction_time = extract_audio_from_video(file_path, VIDEO_AUDIO_FILENAME)
+                if not audio_file:
+                    logging.error("Falha ao extrair o áudio do vídeo. Saindo.")
+                    continue
+                logging.info(f"Áudio extraído do vídeo e salvo em {audio_file} em {extraction_time:.2f} segundos")
+            elif validate_audio_file(file_path):
+                audio_file = file_path
+            else:
+                logging.error("Formato de arquivo não suportado.")
+                print("Formato de arquivo não suportado.")
+                continue
+
+        elif opcao == "3":
+            # Envio de link
+            url = get_user_input(
+                "Digite a URL da plataforma: ",
+                validation_func=is_valid_url,
+                error_message="URL inválida. Verifique o link.",
+                timeout=15  # Adicionado timeout de 15 segundos
+        )
+            if not url:
+                print("Entrada inválida ou tempo limite excedido.")
+                continue
+ 
+            platform = identify_platform(url)
+            logging.info(f"Identificada plataforma: {platform}")
+
+            # Solicitar credenciais se a plataforma for Instagram
+            username, password = None, None
+            if platform == "Instagram Story" or platform == "Instagram Reel":
+                username = get_user_input("Digite o nome de usuário do Instagram (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
+                password = get_user_input("Digite a senha do Instagram (se necessário, deixe em branco para público): ", validation_func=lambda x: True)
+
+            try:
+                # Tratamento para YouTube
+                if platform == "YouTube":
+                    if username and password:
+                        audio_file, download_time = download_with_credentials(url, username, password)
+                    else:
+                        audio_file, download_time = download_audio_from_youtube(url)
+    
+                    if not audio_file:
+                        logging.error("Falha ao baixar o áudio do YouTube. Saindo.")
+                        print("Ocorreu um erro ao baixar o áudio do YouTube. Verifique a URL e tente novamente.")
+                        continue
+                    logging.info(f"Áudio do YouTube baixado e salvo em {audio_file} em {download_time:.2f} segundos")
+    
+                # Tratamento para TikTok
+                elif platform == "TikTok":
+                    audio_file, download_time = download_tiktok_video(url)
+                    if not audio_file:
+                        logging.error("Falha ao baixar o vídeo do TikTok. Saindo.")
+                        print("Ocorreu um erro ao baixar o vídeo do TikTok. Verifique a URL e tente novamente.")
+                        continue
+  
+                    audio_file, extraction_time = extract_audio_from_video(audio_file, VIDEO_AUDIO_FILENAME)
+                    if not audio_file:
+                        logging.error("Falha ao extrair áudio do vídeo do TikTok. Saindo.")
+                        print("Ocorreu um erro ao extrair o áudio do vídeo do TikTok. Verifique se o FFmpeg está instalado corretamente.")
+                        continue
+                    logging.info(f"Áudio extraído do vídeo do TikTok e salvo em {audio_file} em {extraction_time:.2f} segundos")
+
+                 # Tratamento para Instagram
+                elif platform == "Instagram Story" or platform == "Instagram Reel":
+                    if username and password:
+                        audio_file, download_time = download_instagram_story(url, username, password)
+                    else:
+                        logging.error("Impossivel obter o audio do Instagram sem usuário e senha.")
+                        print("Para acessar este conteúdo, pode ser necessário logar na conta do Instagram ou o perfil é privado.")
+                        continue  # Pula para a próxima iteração sem erro
+                    
+                    if not audio_file:
+                        logging.error("Falha ao baixar o vídeo do Instagram. Saindo.")
+                        print("Para acessar este conteúdo, pode ser necessário logar na conta do Instagram ou o perfil é privado.")
+                        continue_processing = False  # Encerra a execução
+                        break
+
+                    # Verifique se audio_file está definido antes de extrair o áudio
+                    audio_file, extraction_time = extract_audio_from_video(audio_file, VIDEO_AUDIO_FILENAME)
+                    if not audio_file:
+                        logging.error(f"Falha ao extrair áudio do vídeo do Instagram. Saindo: {e}")
+                        print("Ocorreu um erro ao extrair o áudio do vídeo do Instagram. Verifique as credenciais e tente novamente.")
+                        continue_processing = False  # Encerra a execução
+                        break
+                    logging.info(f"Áudio extraído do vídeo do Instagram e salvo em {VIDEO_AUDIO_FILENAME} em {extraction_time:.2f} segundos")
+                    
+
+# Restante do código
+                # Outras plataformas
+                else:
+                    print("Plataforma não suportada. A transcrição de áudio para esta plataforma não é suportada.")
+                    continue
+
+            except Exception as e:
+                logging.error(f"Ocorreu um erro ao processar o link: {e}")
+                print(f"Ocorreu um erro ao processar o link: {e}")
+                continue
+
+        else:
+            logging.error("Opção inválida.")
+            print("Opção inválida.")
+            continue
+
+        if not audio_file:
+            print("Falha ao obter o arquivo de áudio. Encerrando.")
+            continue_processing = False  # Encerra a execução
+            break
+
+        # Processar a transcrição
+        try:
+            transcricao_original = process_transcription(audio_file)
+            if not transcricao_original:
+                print("Falha ao obter a transcrição original.")
+            else:
+
+                logging.info("Aprimorando a transcrição com o Gemini...\n")
+                print(f"\nTranscrição original (Gemini):\n{transcricao_original}\n")
+
+                texto_gerado = improve_transcript(transcricao_original)
+
+                if texto_gerado:
+                    print(f"\nTranscrição aprimorada (Gemini):\n{texto_gerado}")
+                else:
+                    print("Falha ao aprimorar a transcrição com o Gemini.")
+
+        except Exception as e:
+            logging.error(f"Ocorreu um erro durante o processamento: {e}")
+
+        # Finalizar o processo e aguardar a resposta do usuário por 10 segundos
+        def finalizar_apos_timeout():
+            global continue_processing
+            print("\nNenhuma interação detectada. Finalizando a execução.")
+            continue_processing = False
+
+        timer = threading.Timer(10.0, finalizar_apos_timeout)
+        timer.start()
+
+        user_choice = get_user_input(
+            "\nDeseja realizar novo envio (s/n)? ",
+            validation_func=lambda x: x.lower() in ['s', 'n'],
+            error_message="Por favor, digite 's' para sim ou 'n ' para não.",
+            timeout=10  # Timeout para a escolha do usuário
+        )
+
+        timer.cancel()  # Cancela o timer
+        
+        if user_choice is None or user_choice.lower() == 'n':
+            print("Finalizando a execução.")
+            continue_processing = False
+
+    logging.info("Execução finalizada.")
+
+# Funções auxiliares
+def clear_output_directory():
+    """
+    Remove todos os arquivos do diretório de saída.
+    """
+    try:
+        if os.path.exists(OUTPUT_DIR):
+            shutil.rmtree(OUTPUT_DIR)  # Remove o diretório e seu conteúdo
+        os.makedirs(OUTPUT_DIR)          # Recria o diretório
+        logging.info(f"Diretório de saída limpo: {OUTPUT_DIR}")
+    except Exception as e:
+        logging.error(f"Erro ao limpar diretório de saída: {e}")
+
+def is_valid_youtube_url(url):
+    """
+    Valida se a URL é de um vídeo do YouTube, incluindo variações como:
+    - Links curtos (youtu.be)
+    - Links com parâmetros de compartilhamento
+    - Links do YouTube Music
+    - Links com timestamp
+    """
+    youtube_regex_patterns = [
+        # Padrão completo do YouTube
+        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?([^&=%\?]{11})',
+        
+        # Links curtos do YouTube (youtu.be)
+        r'https?://(?:www\.)?youtu\.be/([^&\?]+)',
+        
+        # YouTube Music
+        r'(https?://)?(music\.youtube\.com)/(watch\?v=|embed/|v/)?([^&=%\?]{11})',
+        
+        # Links com parâmetros adicionais
+        r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/)?([^&=%\?]{11})(\?.*)?'
+    ]
+    
+    for pattern in youtube_regex_patterns:
+        match = re.match(pattern, url)
+        if match:
+            return True
+    return False
+
+def is_valid_tiktok_url(url):
+    """Valida se a URL é de um vídeo do TikTok."""
+    tiktok_regex = r'https?://(?:m|www|vm)\.tiktok\.com/(?:.+/)?(?:video/)?([0-9]+)'
+    match = re.match(tiktok_regex, url)
+    return bool(match)
+
+def is_valid_instagram_story_url(url):
+    """Valida se a URL é de um Story do Instagram."""
+    instagram_story_regex = r'https?://(?:www\.)?instagram\.com/stories/[a-zA-Z0-9_.]+/([0-9]+)/'
+    match = re.match(instagram_story_regex, url)
+    return bool(match)
+
+def is_valid_instagram_reel_url(url):
+    """Valida se a URL é de um Reel do Instagram."""
+    instagram_reel_regex = r'https?://(?:www\.)?instagram\.com/reels/([a-zA-Z0-9_-]+)/?'
+    match = re.match(instagram_reel_regex, url)
+    return bool(match)
+
+def is_valid_url(url):
+    """Valida se a string é uma URL."""
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except:
+        return False
+
+def validate_audio_file(file_path):
+    """Valida se o arquivo é de áudio, verificando a extensão e o tipo MIME."""
+    audio_extensions = ['.wav', '.mp3', '.ogg', '.flac', '.m4a', '.webm']
+    mime_type, _ = mimetypes.guess_type(file_path)
+    return (
+        os.path.isfile(file_path) and
+        any(file_path.lower().endswith(ext) for ext in audio_extensions) and
+        mime_type and mime_type.startswith('audio/')
+    )
+
+def validate_video_file(file_path):
+    """Valida se o arquivo é um arquivo de vídeo com extensões comuns."""
+    video_extensions = ['.mp4', '.avi', '.mov', '.mkv', '.webm']  # Adicione mais se necessário
+    return (
+        os.path.isfile(file_path) and
+        any(file_path.lower().endswith(ext) for ext in video_extensions)
+    )
+
+def identify_platform(url):
+    """Identifica a plataforma da URL."""
+    if is_valid_youtube_url(url):
+        return "YouTube"
+    elif is_valid_tiktok_url(url):
+        return "TikTok"
+    elif is_valid_instagram_story_url(url):
+        return "Instagram Story"
+    elif is_valid_instagram_reel_url(url):
+        return "Instagram Reel"
+    elif is_valid_url(url):
+        return "Generic"
+    else:
+        return None
+        
 main()
