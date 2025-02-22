@@ -43,6 +43,7 @@ MP3_OUTPUT_FILENAME = os.path.join(OUTPUT_DIR, "output.mp3")
 WAVE_OUTPUT_FILENAME_REDUCED = os.path.join(OUTPUT_DIR, "output_reduced.wav")
 YOUTUBE_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "youtube_audio.webm")
 VIDEO_AUDIO_FILENAME = os.path.join(OUTPUT_DIR, "video_audio.wav")
+TIKTOK_VIDEO_FILENAME = os.path.join(OUTPUT_DIR, "tiktok_video.mp4")
 
 # Configurações da API Gemini (Carregadas do config.py)
 GEMINI_API_URL = f"{GEMINI_API_URL}?key={GEMINI_API_KEY}" # Usar a variável GEMINI_API_URL do config.py
@@ -137,6 +138,30 @@ def download_audio_from_youtube(youtube_url):
         logging.error(f"Erro ao baixar o áudio do YouTube: {e}")
         return None, None
 
+def download_tiktok_video(tiktok_url):
+    """Baixa o vídeo de um link do TikTok."""
+    try:
+        ydl_opts = {
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+            'outtmpl': TIKTOK_VIDEO_FILENAME,  # Caminho para salvar o vídeo
+            'noplaylist': True,
+            'nocheckcertificate': True,  # Ignorar erros de certificado
+            'quiet': True,  # Modo silencioso
+            'no_warnings': True,
+            'logger': MyLogger(),
+            'progress_hooks': [],
+            'force': True,
+        }
+        start_time_download = time.time()
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([tiktok_url])
+        download_time = time.time() - start_time_download
+        logging.info(f"Vídeo do TikTok baixado com sucesso em {download_time:.2f} segundos")
+        return TIKTOK_VIDEO_FILENAME, download_time
+    except Exception as e:
+        logging.error(f"Erro ao baixar o vídeo do TikTok: {e}")
+        return None, None
+
 def extract_audio_from_video(video_file, output_file):
     """Extrai o áudio de um arquivo de vídeo usando ffmpeg."""
     try:
@@ -202,6 +227,12 @@ def is_valid_youtube_url(url):
         if match:
             return True
     return False
+
+def is_valid_tiktok_url(url):
+    """Valida se a URL é de um vídeo do TikTok."""
+    tiktok_regex = r'https?://(?:m|www|vm)\.tiktok\.com/(?:.+/)?(?:video/)?([0-9]+)'
+    match = re.match(tiktok_regex, url)
+    return bool(match)
 
 def extract_video_id(url):
     """
@@ -430,12 +461,13 @@ if __name__ == "__main__":
     logging.info("2. Carregar arquivo de áudio local")
     logging.info("3. Baixar áudio do YouTube (vídeo, música, shorts)")
     logging.info("4. Enviar arquivo de vídeo para transcrição")
+    logging.info("5. Baixar vídeo do TikTok")
 
     # Solicitar opção com validação
     opcao = get_user_input(
-        "Digite 1, 2, 3 ou 4: ",
-        validation_func=lambda x: x in ['1', '2', '3', '4'],
-        error_message="Por favor, escolha 1, 2, 3 ou 4."
+        "Digite 1, 2, 3, 4 ou 5: ",
+        validation_func=lambda x: x in ['1', '2', '3', '4', '5'],
+        error_message="Por favor, escolha 1, 2, 3, 4 ou 5."
     )
 
     # Variável para armazenar o caminho do arquivo de áudio
@@ -518,6 +550,28 @@ if __name__ == "__main__":
             exit(1)
 
         logging.info(f"Áudio extraído do vídeo e salvo em {audio_file} em {extraction_time:.2f} segundos")
+    
+    elif opcao == "5":
+        # Baixar vídeo do TikTok
+        tiktok_url = get_user_input(
+            "Digite o link do TikTok: ",
+            validation_func=is_valid_tiktok_url,
+            error_message="URL do TikTok inválida. Verifique o link."
+        )
+
+        # Baixar vídeo do TikTok
+        video_file, download_time = download_tiktok_video(tiktok_url)
+        if not video_file:
+            logging.error("Falha ao baixar o vídeo do TikTok. Saindo.")
+            exit(1)
+        logging.info(f"Vídeo do TikTok baixado com sucesso em {video_file} em {download_time:.2f} segundos")
+
+        # Extrair áudio do vídeo do TikTok
+        audio_file, extraction_time = extract_audio_from_video(video_file, VIDEO_AUDIO_FILENAME)
+        if not audio_file:
+            logging.error("Falha ao extrair o áudio do vídeo do TikTok. Saindo.")
+            exit(1)
+        logging.info(f"Áudio extraído do vídeo do TikTok e salvo em {audio_file} em {extraction_time:.2f} segundos")
 
     # Processamento comum para todas as opções
     # Reduzir taxa de amostragem
