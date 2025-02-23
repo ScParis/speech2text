@@ -132,3 +132,40 @@
 2025-02-23 00:11:45,777 - INFO - Transcrição concluída com sucesso
 2025-02-23 00:11:45,777 - INFO - Iniciando aprimoramento da transcrição
 2025-02-23 00:11:53,869 - INFO - Transcrição aprimorada com sucesso
+2025-02-23 00:15:49,111 - INFO - Módulos importados com sucesso
+2025-02-23 00:15:49,328 - INFO - Starting GUI application
+2025-02-23 00:15:58,926 - INFO - Creating YouTube download thread
+2025-02-23 00:15:58,927 - INFO - YouTubeDownloadThread initialized with URL: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:15:58,927 - INFO - Starting YouTube download thread
+2025-02-23 00:15:58,928 - INFO - Starting YouTube download: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:16:04,242 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:16:04,247 - INFO - Diretório de saída limpo: output_files
+2025-02-23 00:16:04,260 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:16:04,261 - INFO - Iniciando transcrição do arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:16:04,261 - INFO - Iniciando redução da taxa de amostragem
+2025-02-23 00:16:04,262 - ERROR - Erro: Arquivo não encontrado: output_files/youtube_audio.mp3
+2025-02-23 00:16:04,262 - ERROR - Falha ao reduzir a taxa de amostragem
+2025-02-23 00:16:04,265 - ERROR - Error displayed to user: Falha ao reduzir a taxa de amostragem
+2025-02-23 00:17:24,022 - INFO - Módulos importados com sucesso
+2025-02-23 00:17:24,023 - INFO - Starting GUI application
+2025-02-23 00:19:43,007 - INFO - Módulos importados com sucesso
+2025-02-23 00:19:43,010 - INFO - Starting GUI application
+2025-02-23 00:19:54,205 - INFO - Diretório de saída limpo: output_files
+2025-02-23 00:19:54,213 - INFO - Creating YouTube download thread
+2025-02-23 00:19:54,213 - INFO - YouTubeDownloadThread initialized with URL: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:19:54,214 - INFO - Starting YouTube download thread
+2025-02-23 00:19:54,215 - INFO - Starting YouTube download: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:19:59,365 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:19:59,366 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:19:59,368 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:19:59,369 - INFO - Iniciando transcrição do arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:19:59,370 - INFO - Iniciando redução da taxa de amostragem
+2025-02-23 00:20:00,264 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.89s
+2025-02-23 00:20:00,264 - INFO - Iniciando conversão para MP3
+2025-02-23 00:20:00,655 - INFO - Conversão para MP3 concluída. Tempo: 0.39s
+2025-02-23 00:20:00,656 - INFO - Iniciando transcrição com Gemini
+2025-02-23 00:20:07,031 - INFO - Transcrição concluída com sucesso
+2025-02-23 00:20:07,032 - INFO - Iniciando aprimoramento da transcrição
+2025-02-23 00:20:16,245 - INFO - Transcrição aprimorada com sucesso
+2025-02-23 00:20:45,342 - INFO - Módulos importados com sucesso
+2025-02-23 00:20:45,355 - INFO - Starting GUI application

@@ -13,3 +13,4 @@ __pycache__/
 /backup/
 .log
 output_files/
+gui_app.log

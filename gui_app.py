@@ -34,6 +34,7 @@ from PyQt5.QtGui import QFont, QIcon, QColor
 import pyaudio
 import wave
 from config_manager import ConfigManager
+import shutil
 
 # Configurar logging
 logging.basicConfig(
@@ -381,9 +382,9 @@ class SpeechToTextApp(QMainWindow):
         
         # YouTube Link Input
         url_layout = QHBoxLayout()
-        self.url_input = QLineEdit()
-        self.url_input.setPlaceholderText('Paste YouTube URL here')
-        url_layout.addWidget(self.url_input)
+        self.youtube_url_input = QLineEdit()
+        self.youtube_url_input.setPlaceholderText('Paste YouTube URL here')
+        url_layout.addWidget(self.youtube_url_input)
         
         # Download Button
         download_btn = QPushButton('Download')
@@ -482,77 +483,81 @@ class SpeechToTextApp(QMainWindow):
 
     def download_youtube(self):
         """Downloads audio from YouTube"""
-        url = self.url_input.text().strip()
-        if not url:
-            QMessageBox.warning(self, 'Error', 'Please enter a YouTube URL')
-            return
-            
         try:
-            # Start download in background thread
+            url = self.youtube_url_input.text().strip()
+            if not url:
+                self.show_error("Por favor, insira uma URL do YouTube")
+                return
+            
+            # Clear output directory before starting new download
+            self.clear_output_directory()
+            
+            self.disable_buttons()
+            self.update_progress("Iniciando download do YouTube...")
+            
             logging.info("Creating YouTube download thread")
             self.download_thread = YouTubeDownloadThread(url)
-            self.download_thread.download_complete.connect(self.start_transcription)
-            self.download_thread.download_progress.connect(lambda msg: self.statusBar.showMessage(msg))
-            self.download_thread.error_occurred.connect(self.show_error)
+            self.download_thread.download_complete.connect(self.download_finished)
+            self.download_thread.download_progress.connect(self.update_progress)
+            self.download_thread.error_occurred.connect(self.handle_error)
+            
             logging.info("Starting YouTube download thread")
             self.download_thread.start()
             
         except Exception as e:
-            logging.error(f"Error starting YouTube download: {e}")
+            self.show_error(f"Erro ao iniciar download: {str(e)}")
+            self.enable_buttons()
+            logging.error(f"Erro ao iniciar download: {e}")
             logging.error(traceback.format_exc())
-            self.show_error(str(e))
-
-    def upload_audio_file(self):
-        """Permits upload of audio file"""
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, 'Select File', 
-            '', 
-            'Audio Files (*.wav *.mp3)'
-        )
-        if file_path:
-            try:
-                logging.info(f"File selected: {file_path}")
-                self.start_transcription(file_path)
-            except Exception as e:
-                logging.error(f"Error loading audio file: {e}")
-                logging.error(traceback.format_exc())
-                self.show_error(str(e))
 
     def start_transcription(self, audio_file):
-        """Starts the transcription process"""
+        """Starts the transcription process."""
         try:
-            logging.info(f"Starting transcription of file: {audio_file}")
-            self.statusBar.showMessage("Starting transcription...")
-            self.transcript_display.clear()
-            
-            # Disable buttons during transcription
             self.disable_buttons()
-            
-            # Start transcription in background thread
-            logging.info("Creating transcription thread")
-            self.transcript_thread = TranscriptionThread(audio_file)
-            self.transcript_thread.transcription_complete.connect(self.transcription_finished)
-            self.transcript_thread.transcription_progress.connect(self.update_progress)
-            self.transcript_thread.error_occurred.connect(self.handle_error)
-            logging.info("Starting transcription thread")
-            self.transcript_thread.start()
-            
+            self.update_progress("Iniciando transcrição...")
+            self.transcription_thread = TranscriptionThread(audio_file)
+            self.transcription_thread.transcription_complete.connect(self.transcription_finished)
+            self.transcription_thread.transcription_progress.connect(self.update_progress)
+            self.transcription_thread.error_occurred.connect(self.handle_error)
+            self.transcription_thread.start()
+            logging.info(f"Iniciando transcrição do arquivo: {audio_file}")
         except Exception as e:
-            logging.error(f"Error starting transcription: {e}")
+            self.show_error(f"Erro ao iniciar transcrição: {str(e)}")
+            self.enable_buttons()
+            logging.error(f"Erro ao iniciar transcrição: {e}")
             logging.error(traceback.format_exc())
-            self.handle_error(str(e))
+
+    def clear_output_directory(self):
+        """Remove todos os arquivos do diretório de saída."""
+        try:
+            if os.path.exists(OUTPUT_DIR):
+                for file in os.listdir(OUTPUT_DIR):
+                    file_path = os.path.join(OUTPUT_DIR, file)
+                    try:
+                        if os.path.isfile(file_path):
+                            os.remove(file_path)
+                        elif os.path.isdir(file_path):
+                            os.rmdir(file_path)
+                    except Exception as e:
+                        logging.error(f"Error clearing output directory: {e}")
+                        logging.error(traceback.format_exc())
+            if not os.path.exists(OUTPUT_DIR):
+                os.makedirs(OUTPUT_DIR)
+            logging.info(f"Diretório de saída limpo: {OUTPUT_DIR}")
+        except Exception as e:
+            logging.error(f"Erro ao limpar diretório de saída: {e}")
 
     def disable_buttons(self):
         """Disables interactive buttons during processing"""
         for button in self.findChildren(QPushButton):
             button.setEnabled(False)
-        self.url_input.setEnabled(False)
+        self.youtube_url_input.setEnabled(False)
 
     def enable_buttons(self):
         """Re-enables interactive buttons after processing"""
         for button in self.findChildren(QPushButton):
             button.setEnabled(True)
-        self.url_input.setEnabled(True)
+        self.youtube_url_input.setEnabled(True)
 
     def update_progress(self, message):
         """Updates progress message in status bar"""
@@ -606,6 +611,32 @@ class SpeechToTextApp(QMainWindow):
         """Show the configuration dialog."""
         dialog = ConfigDialog(self.config_manager, self)
         dialog.exec_()
+
+    def download_finished(self, audio_file):
+        """Called when YouTube download is complete."""
+        logging.info(f"Download completed: {audio_file}")
+        if os.path.exists(audio_file):
+            self.start_transcription(audio_file)
+        else:
+            self.show_error("Arquivo de áudio não encontrado após download")
+            self.enable_buttons()
+
+    def upload_audio_file(self):
+        """Permite o upload de arquivos de áudio."""
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, 'Selecione o arquivo',
+                '',
+                'Arquivos de Áudio (*.wav *.mp3)'
+            )
+            if file_path:
+                logging.info(f"Arquivo selecionado: {file_path}")
+                self.clear_output_directory()
+                self.start_transcription(file_path)
+        except Exception as e:
+            self.show_error(f"Erro ao carregar arquivo de áudio: {str(e)}")
+            logging.error(f"Erro ao carregar arquivo de áudio: {e}")
+            logging.error(traceback.format_exc())
 
 def clear_output_directory():
     """Clears the output directory before starting the application."""
