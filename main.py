@@ -841,5 +841,7 @@ def identify_platform(url):
         return "Generic"
     else:
         return None
-        
-main()
+
+if __name__ == '__main__':
+    # Only run the CLI interface if this file is run directly
+    main()

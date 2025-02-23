@@ -1,118 +1,95 @@
-# 🎙️ Speech-to-Text Converter
+# Speech-to-Text Transcriber
 
-## 🌟 Visão Geral do Projeto
+A modern and user-friendly application for transcribing audio to text using the Gemini API.
 
-O Speech-to-Text Converter é uma solução avançada de transcrição de áudio que utiliza inteligência artificial para transformar diferentes fontes de áudio em texto preciso e formatado.
+## Features
 
-### 🚀 Principais Características
+- 🎤 Audio Recording: Record audio directly from your microphone
+- 📁 File Upload: Upload existing audio files for transcription
+- 🎥 YouTube Integration: Download and transcribe audio from YouTube videos
+- 🔒 Secure Configuration: Encrypted storage of API credentials
+- 🎯 Modern Interface: Dark theme with intuitive controls
 
-- **Múltiplas Fontes de Entrada**:
-  - Gravação direta do microfone
-  - Carregamento de arquivos de áudio locais
-  - Download de áudio de plataformas como YouTube (vídeos, músicas, shorts)
+## Installation
 
-- **Processamento Inteligente**:
-  - Redução da taxa de amostragem para otimização
-  - Conversão automática para formatos compatíveis
-  - Transcrição utilizando API Gemini
-
-- **Recursos Avançados**:
-  - Correção gramatical e ortográfica
-  - Identificação de diferentes locutores
-  - Formatação inteligente do texto transcrito
-
-## 🛠 Tecnologias Utilizadas
-
-- **Linguagem**: Python 3.x
-- **Processamento de Áudio**: 
-  - PyAudio
-  - FFmpeg
-- **Download de Vídeo**: yt-dlp
-- **Inteligência Artificial**: 
-  - Google Generative AI (Gemini)
-  - Processamento de linguagem natural
-
-## 📦 Dependências
-
-- requests
-- pyaudio
-- yt-dlp
-- tqdm
-- ffmpeg-python
-- google-auth
-- google-generativeai
-
-## 🔧 Instalação Rápida
-
+1. Clone the repository:
 ```bash
-# Clonar o repositório
-git clone https://github.com/ScParis/speech2text.git
+git clone https://github.com/paris-sc/proj-speech2text.git
 cd speech2text
-
-# Criar ambiente virtual
-python3 -m venv venv
-source venv/bin/activate
-
-# Instalar dependências
-pip install -r requirements.txt
-
-# Instalar FFmpeg (Ubuntu/Debian)
-sudo apt-get install ffmpeg
 ```
 
-## 🔐 Configuração
-
-1. Obtenha uma chave de API do Google Generative AI (Gemini)
-2. Configure a variável de ambiente:
-   ```bash
-   export GEMINI_API_KEY='sua_chave_aqui'
-   ```
-
-## 🚀 Uso Rápido
-
+2. Create and activate a virtual environment:
 ```bash
-# Executar o aplicativo
-python main.py
-
-# Opções disponíveis:
-# 1. Gravar áudio do microfone
-# 2. Carregar arquivo de áudio local
-# 3. Baixar áudio do YouTube
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# or
+.\venv\Scripts\activate  # Windows
 ```
 
-## 🤝 Como Contribuir
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-1. Faça um fork do repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-3. Commit suas mudanças (`git commit -am 'Adiciona nova feature'`)
-4. Push para a branch (`git push origin feature/nova-feature`)
-5. Crie um Pull Request
+## Configuration
 
-## 🐛 Solução de Problemas Comuns
+Before using the application, you need to configure your Gemini API credentials:
 
-- **Erro de Gravação de Áudio**: 
-  - Verifique as configurações do microfone
-  - Garanta permissões de acesso ao dispositivo de áudio
+1. Launch the application:
+```bash
+python gui_app.py
+```
 
-- **Problemas com Dependências**:
-  - Use sempre um ambiente virtual
-  - Mantenha o pip e as dependências atualizadas
+2. Click the settings icon (⚙️) in the top-right corner
+3. Enter your Gemini API credentials:
+   - **API Key**: Your Gemini API authentication key
+   - **API URL**: The Gemini API endpoint URL (e.g., https://generativelanguage.googleapis.com)
+4. Click "Save" to securely store your credentials
 
-- **Erros na Transcrição**:
-  - Verifique a qualidade do áudio de entrada
-  - Certifique-se de ter uma conexão estável com a internet
-  - Confirme a validade da chave da API Gemini
+Your credentials will be encrypted and stored securely on your system.
 
-## 📊 Métricas e Performance
+## Usage
 
-- Suporta áudios de até 10 minutos
-- Tempo médio de transcrição: 30-60 segundos
-- Precisão de transcrição: ~90% (variável conforme qualidade do áudio)
+### GUI Application
 
-## 📄 Licença
+1. Launch the GUI:
+```bash
+python gui_app.py
+```
 
-Distribuído sob a Licença MIT. Veja `LICENSE` para mais informações.
+2. Choose your input method:
+   - Click "Record Audio" to record from your microphone
+   - Click "Upload Audio File" to transcribe an existing file
+   - Paste a YouTube URL and click "Download" to transcribe from YouTube
 
-## 🌐 Contato
+3. The transcription will appear in the main text area
+4. Use "Export Transcription" to save your results
 
-Desenvolvido com ❤️ @scparis
+### Command Line Interface
+
+For command-line usage:
+```bash
+python main.py --help
+```
+
+## Security
+
+- API credentials are encrypted using Fernet symmetric encryption
+- Credentials are stored securely and never exposed in plaintext
+- Environment variables are used for runtime credential management
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+If you encounter any issues or have questions, please [open an issue](https://github.com/paris-sc/proj-speech2text/issues) on GitHub.

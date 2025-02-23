@@ -1,0 +1,134 @@
+2025-02-22 23:17:12,558 - INFO - Módulos importados com sucesso
+2025-02-22 23:17:35,631 - INFO - Módulos importados com sucesso
+2025-02-22 23:17:50,946 - INFO - Iniciando transcrição do arquivo: output_files/youtube_audio.mp3
+2025-02-22 23:17:50,947 - INFO - Idioma selecionado: pt-BR
+2025-02-22 23:17:50,947 - INFO - Criando thread de transcrição
+2025-02-22 23:17:50,947 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3, idioma: pt-BR
+2025-02-22 23:17:50,947 - INFO - Iniciando thread de transcrição
+2025-02-22 23:17:50,947 - INFO - Thread de transcrição iniciada com sucesso
+2025-02-22 23:17:50,948 - INFO - Iniciando redução da taxa de amostragem
+2025-02-22 23:47:26,712 - INFO - Diretório de saída limpo: output_files
+2025-02-22 23:47:26,713 - INFO - Escolha uma opção de entrada:
+2025-02-22 23:47:26,713 - INFO - 1. Gravação de voz
+2025-02-22 23:47:26,714 - INFO - 2. Envio de arquivo (áudio ou vídeo)
+2025-02-22 23:47:26,714 - INFO - 3. Envio de link
+2025-02-22 23:47:54,402 - INFO - Escolha uma opção de entrada:
+2025-02-22 23:47:54,402 - INFO - 1. Gravação de voz
+2025-02-22 23:47:54,402 - INFO - 2. Envio de arquivo (áudio ou vídeo)
+2025-02-22 23:47:54,403 - INFO - 3. Envio de link
+2025-02-22 23:48:09,404 - INFO - Execução finalizada.
+2025-02-22 23:48:09,404 - INFO - Módulos importados com sucesso
+2025-02-22 23:48:19,733 - INFO - Creating YouTube download thread
+2025-02-22 23:48:19,734 - INFO - YouTubeDownloadThread initialized with URL: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:48:19,735 - INFO - Starting YouTube download thread
+2025-02-22 23:48:19,736 - INFO - Starting YouTube download: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:48:24,883 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-22 23:48:24,883 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-22 23:48:24,884 - INFO - Creating transcription thread
+2025-02-22 23:48:24,884 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-22 23:48:24,884 - INFO - Starting transcription thread
+2025-02-22 23:48:24,884 - INFO - Iniciando redução da taxa de amostragem
+2025-02-22 23:48:25,239 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.35s
+2025-02-22 23:48:25,239 - INFO - Iniciando conversão para MP3
+2025-02-22 23:48:25,541 - INFO - Conversão para MP3 concluída. Tempo: 0.30s
+2025-02-22 23:48:25,541 - INFO - Iniciando transcrição com Gemini
+2025-02-22 23:48:28,371 - INFO - Transcrição concluída com sucesso
+2025-02-22 23:48:28,371 - INFO - Iniciando aprimoramento da transcrição
+2025-02-22 23:48:35,081 - INFO - Transcrição aprimorada com sucesso
+2025-02-22 23:53:15,342 - INFO - Módulos importados com sucesso
+2025-02-22 23:53:15,347 - INFO - Starting GUI application
+2025-02-22 23:53:17,268 - INFO - Starting audio recording
+2025-02-22 23:53:20,790 - INFO - Audio recording completed
+2025-02-22 23:53:20,791 - INFO - Starting transcription of file: output_files/output.wav
+2025-02-22 23:53:20,791 - INFO - Creating transcription thread
+2025-02-22 23:53:20,791 - INFO - TranscriptionThread inicializada com arquivo: output_files/output.wav
+2025-02-22 23:53:20,791 - INFO - Starting transcription thread
+2025-02-22 23:53:20,792 - INFO - Iniciando redução da taxa de amostragem
+2025-02-22 23:53:20,984 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.19s
+2025-02-22 23:53:20,985 - INFO - Iniciando conversão para MP3
+2025-02-22 23:53:21,193 - INFO - Conversão para MP3 concluída. Tempo: 0.21s
+2025-02-22 23:53:21,194 - INFO - Iniciando transcrição com Gemini
+2025-02-22 23:53:21,199 - DEBUG - Starting new HTTPS connection (1): generativelanguage.googleapis.com:443
+2025-02-22 23:53:22,337 - DEBUG - https://generativelanguage.googleapis.com:443 "POST /v1beta/models/gemini-1.5-flash:generateContent?key=None HTTP/1.1" 400 None
+2025-02-22 23:53:22,340 - ERROR - Erro na requisição para a API Gemini: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=None
+2025-02-22 23:53:22,343 - ERROR - Falha na transcrição do áudio
+2025-02-22 23:53:22,346 - ERROR - Error displayed to user: Falha na transcrição do áudio
+2025-02-22 23:53:26,920 - INFO - Creating YouTube download thread
+2025-02-22 23:53:26,920 - INFO - YouTubeDownloadThread initialized with URL: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:53:26,920 - INFO - Starting YouTube download thread
+2025-02-22 23:53:26,921 - INFO - Starting YouTube download: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:53:32,682 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-22 23:53:32,682 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-22 23:53:32,683 - INFO - Creating transcription thread
+2025-02-22 23:53:32,684 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-22 23:53:32,684 - INFO - Starting transcription thread
+2025-02-22 23:53:32,684 - INFO - Iniciando redução da taxa de amostragem
+2025-02-22 23:54:26,854 - INFO - Módulos importados com sucesso
+2025-02-22 23:54:27,052 - INFO - Starting GUI application
+2025-02-22 23:54:34,917 - INFO - Creating YouTube download thread
+2025-02-22 23:54:34,918 - INFO - YouTubeDownloadThread initialized with URL: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:54:34,919 - INFO - Starting YouTube download thread
+2025-02-22 23:54:34,920 - INFO - Starting YouTube download: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-22 23:54:41,041 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-22 23:54:41,042 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-22 23:54:41,044 - INFO - Creating transcription thread
+2025-02-22 23:54:41,044 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-22 23:54:41,044 - INFO - Starting transcription thread
+2025-02-22 23:54:41,045 - INFO - Iniciando redução da taxa de amostragem
+2025-02-22 23:54:41,631 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.59s
+2025-02-22 23:54:41,632 - INFO - Iniciando conversão para MP3
+2025-02-22 23:54:42,008 - INFO - Conversão para MP3 concluída. Tempo: 0.38s
+2025-02-22 23:54:42,008 - INFO - Iniciando transcrição com Gemini
+2025-02-22 23:54:45,023 - INFO - Transcrição concluída com sucesso
+2025-02-22 23:54:45,023 - INFO - Iniciando aprimoramento da transcrição
+2025-02-22 23:54:51,385 - INFO - Transcrição aprimorada com sucesso
+2025-02-23 00:08:04,894 - INFO - Módulos importados com sucesso
+2025-02-23 00:08:04,932 - INFO - Starting GUI application
+2025-02-23 00:09:17,718 - INFO - Módulos importados com sucesso
+2025-02-23 00:09:17,720 - INFO - Starting GUI application
+2025-02-23 00:10:03,942 - INFO - Creating YouTube download thread
+2025-02-23 00:10:03,942 - INFO - YouTubeDownloadThread initialized with URL: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-23 00:10:03,946 - INFO - Starting YouTube download thread
+2025-02-23 00:10:03,947 - INFO - Starting YouTube download: https://youtube.com/shorts/SWgp3uDVjy8?si=CES0s30F3QzY36iv
+2025-02-23 00:10:08,536 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:10:08,536 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-23 00:10:08,537 - INFO - Creating transcription thread
+2025-02-23 00:10:08,537 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:10:08,537 - INFO - Starting transcription thread
+2025-02-23 00:10:08,537 - INFO - Iniciando redução da taxa de amostragem
+2025-02-23 00:10:08,911 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.37s
+2025-02-23 00:10:08,911 - INFO - Iniciando conversão para MP3
+2025-02-23 00:10:09,255 - INFO - Conversão para MP3 concluída. Tempo: 0.34s
+2025-02-23 00:10:09,255 - INFO - Iniciando transcrição com Gemini
+2025-02-23 00:10:12,264 - INFO - Transcrição concluída com sucesso
+2025-02-23 00:10:12,265 - INFO - Iniciando aprimoramento da transcrição
+2025-02-23 00:10:18,633 - INFO - Transcrição aprimorada com sucesso
+2025-02-23 00:10:49,633 - INFO - Creating YouTube download thread
+2025-02-23 00:10:49,633 - INFO - YouTubeDownloadThread initialized with URL: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:10:49,633 - INFO - Starting YouTube download thread
+2025-02-23 00:10:49,634 - INFO - Starting YouTube download: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:10:54,893 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:10:54,895 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-23 00:10:54,896 - INFO - Creating transcription thread
+2025-02-23 00:10:54,896 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:10:54,897 - INFO - Starting transcription thread
+2025-02-23 00:10:54,898 - INFO - Iniciando redução da taxa de amostragem
+2025-02-23 00:11:26,454 - INFO - Módulos importados com sucesso
+2025-02-23 00:11:26,456 - INFO - Starting GUI application
+2025-02-23 00:11:34,193 - INFO - Creating YouTube download thread
+2025-02-23 00:11:34,194 - INFO - YouTubeDownloadThread initialized with URL: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:11:34,195 - INFO - Starting YouTube download thread
+2025-02-23 00:11:34,196 - INFO - Starting YouTube download: https://www.tiktok.com/@cortinhos.legais/video/7448943323110280453?is_from_webapp=1&sender_device=pc
+2025-02-23 00:11:38,785 - INFO - Download completed: output_files/youtube_audio.mp3
+2025-02-23 00:11:38,785 - INFO - Starting transcription of file: output_files/youtube_audio.mp3
+2025-02-23 00:11:38,786 - INFO - Creating transcription thread
+2025-02-23 00:11:38,786 - INFO - TranscriptionThread inicializada com arquivo: output_files/youtube_audio.mp3
+2025-02-23 00:11:38,786 - INFO - Starting transcription thread
+2025-02-23 00:11:38,787 - INFO - Iniciando redução da taxa de amostragem
+2025-02-23 00:11:39,305 - INFO - Taxa de amostragem reduzida com sucesso. Tempo: 0.52s
+2025-02-23 00:11:39,306 - INFO - Iniciando conversão para MP3
+2025-02-23 00:11:39,788 - INFO - Conversão para MP3 concluída. Tempo: 0.48s
+2025-02-23 00:11:39,788 - INFO - Iniciando transcrição com Gemini
+2025-02-23 00:11:45,777 - INFO - Transcrição concluída com sucesso
+2025-02-23 00:11:45,777 - INFO - Iniciando aprimoramento da transcrição
+2025-02-23 00:11:53,869 - INFO - Transcrição aprimorada com sucesso
