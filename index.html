@@ -1,58 +1,130 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Speech-to-Text App</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="description"
+        content="AI-Powered Speech-to-Text Transcription Solution with support for multiple platforms.">
+    <title>AI Speech-to-Text Transcriber</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Você precisará criar styles.css -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 
 <body>
     <div class="container">
         <header class="app-header">
-            <h1><i class="fas fa-microphone"></i> Speech-to-Text App</h1>
-            <p>Transforme sua fala em texto com facilidade!</p>
+            <h1>
+                <i class="fas fa-robot"></i>
+                AI Speech-to-Text Transcriber
+                <span class="badge">v1.0</span> <!--  Versão.  Ajuste se necessário. -->
+            </h1>
+            <div class="header-actions">
+                <a href="https://github.com/ScParis/speech2text" class="cta-button" target="_blank">
+                    <i class="fab fa-github"></i> View on GitHub
+                </a>
+            </div>
         </header>
 
         <main class="app-main">
-            <section class="app-section">
-                <h2>Sobre o Projeto</h2>
-                <p>Este aplicativo utiliza a API Gemini para transcrever áudio em texto. Com funcionalidades para gravar
-                    áudio, converter formatos e baixar áudio do YouTube, ele é uma ferramenta poderosa para quem precisa
-                    de transcrições rápidas e precisas.</p>
+            <section class="hero-section">
+                <div class="hero-content">
+                    <h2>Transform Speech into Text with AI Precision</h2>
+                    <div class="feature-grid">
+                        <div class="feature-card">
+                            <i class="fas fa-microphone"></i>
+                            <h3>Multi-Source Input</h3>
+                            <p>Microphone, audio/video files, YouTube, TikTok & Instagram</p> <!-- Atualizado -->
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-brain"></i>
+                            <h3>AI Processing</h3>
+                            <p>Gemini API powered transcription & correction</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>Secure & Private</h3>
+                            <p>Local processing & secure API key handling</p> <!-- Atualizado -->
+                        </div>
+                    </div>
+                </div>
             </section>
 
-            <section class="app-section">
-                <h2>Funcionalidades</h2>
-                <ul class="app-features">
-                    <li><i class="fas fa-record-vinyl"></i> Gravação de áudio do microfone</li>
-                    <li><i class="fas fa-file-audio"></i> Transcrição de arquivos de áudio existentes</li>
-                    <li><i class="fas fa-exchange-alt"></i> Conversão de áudio para MP3</li>
-                    <li><i class="fab fa-youtube"></i> Integração com YouTube para download de áudio</li>
-                </ul>
+            <section class="platform-section">
+                <h2>Supported Platforms</h2>
+                <div class="platform-grid">
+                    <div class="platform-card">
+                        <i class="fab fa-youtube"></i>
+                        <h4>YouTube</h4>
+                        <p>Public & private videos (requires credentials if private)</p> <!-- Atualizado -->
+                    </div>
+                    <div class="platform-card">
+                        <i class="fab fa-tiktok"></i>
+                        <h4>TikTok</h4>
+                        <p>Video & audio extraction</p>
+                    </div>
+                    <div class="platform-card">
+                        <i class="fab fa-instagram"></i>
+                        <h4>Instagram</h4>
+                        <p>Stories & Reels support (requires credentials)</p> <!-- Atualizado -->
+                    </div>
+                </div>
             </section>
 
-            <section class="app-section">
-                <h2>Como Usar</h2>
-                <ol class="app-instructions">
-                    <li><i class="fas fa-hand-pointer"></i> Escolha uma opção: gravar áudio, fornecer um arquivo ou um
-                        link do YouTube.</li>
-                    <li><i class="fas fa-microphone-alt"></i> Para gravação, clique no botão e fale.</li>
-                    <li><i class="fas fa-folder-open"></i> Para arquivos, forneça o caminho completo.</li>
-                    <li><i class="fas fa-link"></i> Para YouTube, cole o link e aguarde o download.</li>
-                </ol>
+            <section class="installation-section">
+                <h2>Get Started in 3 Steps</h2>
+                <div class="step-grid">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h3>Install Requirements</h3>
+                        <code>pip install -r requirements.txt</code>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h3>Configure API</h3>
+                        <p>Set your Gemini API key in <code>config.py</code></p> <!-- Atualizado -->
+                    </div>
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h3>Start Transcribing</h3>
+                        <code>python main.py</code> <!--  Agora usa main.py -->
+                    </div>
+                </div>
             </section>
         </main>
 
-        <footer>
-            <p>Desenvolvido por <a href="https://github.com/ScParis" target="_blank">@ScParis</a> - 2025</p>
+        <footer class="app-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="https://github.com/ScParis/speech2text/blob/main/README.md"><i
+                                    class="fas fa-book"></i> README</a></li> <!-- Link para o README.md -->
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/ScParis/speech2text"><i class="fab fa-github"></i> GitHub</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="https://github.com/ScParis/speech2text/blob/main/LICENSE"><i
+                                    class="fas fa-balance-scale"></i> MIT License</a></li> <!-- Link para a licença -->
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>© 2024 AI Speech-to-Text Transcriber. Developed by <a href=https://github.com/ScParis>@ScParis</a>
+                </p>
+            </div>
         </footer>
     </div>
 </body>

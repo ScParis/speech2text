@@ -1,29 +1,64 @@
 # Speech-to-Text Transcriber
 
-A modern and user-friendly application for transcribing audio to text using the Gemini API.
+A multi-platform transcription solution with GUI and CLI interfaces, powered by [@ScParis](https://github.com/ScParis).
+
+Use at your own risk...
 
 ## Features
 
-- 🎤 Audio Recording: Record audio directly from your microphone
-- 📁 File Upload: Upload existing audio files for transcription
-- 🎥 YouTube Integration: Download and transcribe audio from YouTube videos
-- 🔒 Secure Configuration: Encrypted storage of API credentials
-- 🎯 Modern Interface: Dark theme with intuitive controls
+### Core Capabilities
+- 🎙️ **Multi-source Input**
+  - Microphone recording (WAV format)
+  - File upload (MP3, WAV, video formats)
+  - URL processing (YouTube, TikTok, Instagram)
+- 🤖 **AI-Powered Processing**
+  - Gemini API integration for accurate transcription
+  - Automatic grammar correction
+  - Speaker differentiation
+- 📂 **Multi-format Output**
+  - Raw transcription
+  - Enhanced formatted text
+  - Export to TXT files
+
+### GUI Features
+- 🎨 Modern dark theme interface
+- 🔐 Encrypted credential storage
+- 📊 Real-time progress tracking
+- ⚡ One-click operations
+
+### CLI Features
+- 🖥️ Console-based interface
+- 🔄 Batch processing support
+- 🌐 Advanced platform support:
+  - YouTube (public/private videos)
+  - TikTok videos
+  - Instagram Stories/Reels (requires credentials)
 
 ## Installation
 
-1. Clone the repository:
+### Prerequisites
+- Python 3.9+
+- FFmpeg (for audio processing)
 ```bash
-git clone https://github.com/paris-sc/proj-speech2text.git
+# Ubuntu/Debian
+sudo apt install ffmpeg
+
+# Windows (via Chocolatey)
+choco install ffmpeg
+```
+
+### Setup
+1. Clone repository:
+```bash
+git clone https://github.com/ScParis/speech2text.git
 cd speech2text
 ```
 
-2. Create and activate a virtual environment:
+2. Create virtual environment:
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# or
-.\venv\Scripts\activate  # Windows
+venv\Scripts\activate    # Windows
 ```
 
 3. Install dependencies:
@@ -33,63 +68,122 @@ pip install -r requirements.txt
 
 ## Configuration
 
-Before using the application, you need to configure your Gemini API credentials:
-
-1. Launch the application:
+### GUI Configuration
+1. Launch application:
 ```bash
 python gui_app.py
 ```
 
-2. Click the settings icon (⚙️) in the top-right corner
-3. Enter your Gemini API credentials:
-   - **API Key**: Your Gemini API authentication key
-   - **API URL**: The Gemini API endpoint URL (e.g., https://generativelanguage.googleapis.com)
-4. Click "Save" to securely store your credentials
+2. Click settings icon (⚙️) and configure:
+   - **API Key**: Gemini authentication key
+   - **API URL**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
+   or
+   - **API URL**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent`
 
-Your credentials will be encrypted and stored securely on your system.
+3. Credentials are encrypted using AES-256
+
+### CLI Configuration
+Set environment variables:
+```bash
+# Linux/Mac
+export GEMINI_API_KEY='your_api_key'
+export GEMINI_API_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
+
+# Windows
+setx GEMINI_API_KEY "your_api_key"
+setx GEMINI_API_URL "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+```
 
 ## Usage
 
 ### GUI Application
-
-1. Launch the GUI:
 ```bash
 python gui_app.py
 ```
 
-2. Choose your input method:
-   - Click "Record Audio" to record from your microphone
-   - Click "Upload Audio File" to transcribe an existing file
-   - Paste a YouTube URL and click "Download" to transcribe from YouTube
+1. **Record Audio**  
+   - Click microphone icon
+   - Speak for up to 5 seconds
+   - Automatic transcription
 
-3. The transcription will appear in the main text area
-4. Use "Export Transcription" to save your results
+2. **Process Files**  
+   - Supported formats: MP3, WAV, MP4, WEBM
+   - Click upload button
+   - Select audio/video file
+
+3. **YouTube Transcription**  
+   - Paste YouTube URL
+   - Click download button
 
 ### Command Line Interface
-
-For command-line usage:
 ```bash
-python main.py --help
+python main.py
+```
+
+1. **Interactive Mode**
+```bash
+Choose input method:
+1. Voice recording
+2. File upload
+3. URL processing
+```
+
+2. **Direct Processing**
+```bash
+# Process YouTube video
+python main.py --url "https://youtube.com/watch?v=..."
+
+# Process local file
+python main.py --file input.mp3
+```
+
+3. **Advanced Options**
+```bash
+# Instagram Story (requires credentials)
+python main.py --url "instagram-story-url" --username your_username --password your_password
+
+# Batch processing
+python main.py --batch file_list.txt
 ```
 
 ## Security
 
-- API credentials are encrypted using Fernet symmetric encryption
-- Credentials are stored securely and never exposed in plaintext
-- Environment variables are used for runtime credential management
+| Feature                | Implementation Details                |
+|------------------------|---------------------------------------|
+| Credential Storage     | AES-256 encrypted configuration file |
+| API Communication      | HTTPS with TLS 1.3                   |
+| Session Management     | Ephemeral environment variables      |
+| Audio Data Handling    | Local processing only                 |
 
-## Contributing
+## Supported Platforms
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+| Platform       | CLI Support | GUI Support |
+|----------------|-------------|-------------|
+| YouTube        | ✅          | ✅          |
+| TikTok         | ✅          | ⚠️*         |
+| Instagram      | ✅          | ⚠️*         |
+| Local Files    | ✅          | ✅          |
+| Microphone     | ✅          | ✅          |
+
+*GUI support requires custom implementation
+
+## Troubleshooting
+
+Common Issues:
+1. **FFmpeg Not Found**  
+   Ensure FFmpeg is installed and in system PATH
+
+2. **Audio Recording Issues**  
+   Check microphone permissions and PyAudio installation
+
+3. **API Errors**  
+   Verify credentials and API endpoint configuration
+
+View detailed logs:
+```bash
+tail -f output_files/speech_to_text.log
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-If you encounter any issues or have questions, please [open an issue](https://github.com/paris-sc/proj-speech2text/issues) on GitHub.
+MIT License - See [LICENSE](LICENSE) for full text.
