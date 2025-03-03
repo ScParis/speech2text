@@ -318,10 +318,10 @@ class MainWindow(QMainWindow):
                 )
                 self.show_config_dialog()
 
-if __name__ == '__main__':
+def main():
     app = QApplication(sys.argv)
     
-    # Configurar logging antes de criar a janela
+    # Configuração inicial
     if not os.path.exists(OUTPUT_DIR):
         os.makedirs(OUTPUT_DIR)
     setup_logging()
@@ -329,3 +329,6 @@ if __name__ == '__main__':
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
