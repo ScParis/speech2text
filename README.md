@@ -1,5 +1,11 @@
 # Speech to Text Transcriber
 
+<<<<<<< HEAD
+=======
+## Descrição
+Aplicativo de transcrição de áudio usando a API Gemini.
+
+>>>>>>> origin/main
 ## Estrutura do Projeto
 ```
 speech2text/
@@ -7,6 +13,7 @@ speech2text/
 ├── services/       # Serviços principais
 ├── utils/         # Utilitários
 ├── gui/           # Interface gráfica
+<<<<<<< HEAD
 └── output_files/  # Arquivos gerados
 ```
 
@@ -15,6 +22,12 @@ speech2text/
 - PyQt5
 - Gemini API key
 
+=======
+├── output_files/  # Arquivos gerados
+└── tests/         # Testes
+```
+
+>>>>>>> origin/main
 ## Instalação
 ```bash
 pip install -r requirements.txt
@@ -22,9 +35,20 @@ pip install -r requirements.txt
 
 ## Uso
 ```bash
+<<<<<<< HEAD
 python main.py
 ```
 
+=======
+python gui_app.py
+```
+
+## Requisitos
+- Python 3.8+
+- PyQt5
+- Gemini API key
+
+>>>>>>> origin/main
 # Speech-to-Text Transcriber
 
 A multi-platform transcription solution with GUI and CLI interfaces, powered by [@ScParis](https://github.com/ScParis).
