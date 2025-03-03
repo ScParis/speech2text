@@ -7,6 +7,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from config.config import GEMINI_API_KEY, GEMINI_API_URL, GEMINI_CONFIG
 from .audio_processing import split_audio, combine_texts
+from utils.audio_processing import split_audio_file
 
 def process_transcription(audio_file):
     """Processa a transcrição do áudio usando threads"""
@@ -99,40 +100,54 @@ def transcribe_chunk(audio_file):
     return None
 
 def transcribe_audio_gemini(audio_file):
-    """Transcreve um arquivo de áudio usando a API Gemini."""
+    """Transcreve um arquivo de áudio usando a API Gemini"""
     try:
-        with open(audio_file, "rb") as f:
-            audio_data = f.read()
-
-        # Codifica o áudio em Base64
-        audio_encoded = base64.b64encode(audio_data).decode("utf-8")
-
-        payload = {
-            "contents": [{
-                "parts": [{
-                    "text": "Transcreva o áudio com precisão."
-                }, {
-                    "inlineData": {
-                        "mimeType": "audio/mpeg",
-                        "data": audio_encoded
-                    }
-                }]
-            }]
-        }
-
-        response = requests.post(
-            GEMINI_API_URL, 
-            json=payload,
-            headers=GEMINI_CONFIG["headers"],
-            timeout=GEMINI_CONFIG["timeout"]
-        )
-        
-        if response.status_code != 200:
-            logging.error(f"Erro na API Gemini: {response.status_code} - {response.text}")
+        # Divide o áudio em chunks menores
+        chunks = split_audio_file(audio_file)
+        if not chunks:
             return None
 
-        result = response.json()
-        return result["candidates"][0]["content"]["parts"][0]["text"]
+        # Processa cada chunk
+        transcriptions = []
+        for i, chunk in enumerate(chunks, 1):
+            logging.info(f"Processando chunk {i} de {len(chunks)}")
+            
+            with open(chunk, "rb") as f:
+                audio_data = f.read()
+
+            audio_encoded = base64.b64encode(audio_data).decode("utf-8")
+            
+            payload = {
+                "contents": [{
+                    "parts": [{
+                        "text": "Transcreva este áudio para texto em português."
+                    }, {
+                        "inlineData": {
+                            "mimeType": "audio/wav",
+                            "data": audio_encoded
+                        }
+                    }]
+                }]
+            }
+
+            response = requests.post(
+                GEMINI_API_URL, 
+                json=payload,
+                headers=GEMINI_CONFIG["headers"],
+                timeout=GEMINI_CONFIG["timeout"]
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if "candidates" in result and result["candidates"]:
+                    transcriptions.append(result["candidates"][0]["content"]["parts"][0]["text"])
+            else:
+                logging.error(f"Erro no chunk {i}: {response.text}")
+        
+        # Combina as transcrições
+        if transcriptions:
+            return " ".join(transcriptions)
+        return None
 
     except Exception as e:
         logging.error(f"Erro na transcrição: {e}")
