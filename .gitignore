@@ -1,18 +1,26 @@
-/media/piperun/HD1/Projects/speech2text/9flbbpunb1oo888ogw404gwccwscsco.wav
-/temp/
+# Development
+__pycache__/
+*.py[cod]
+.env
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Project
+config/user_config.json
+output_files/*
+!output_files/.gitkeep
+
+# Media
 *.wav
 *.mp3
 *.webm
 *.mkv
-.env
-__pycache__/
-*.pyc
-*.tmp
-*.swp
-*.swo
-*.class
-/backup/
-.log
-output_files/
-gui_app.log
-config/user_config.json
+*.mp4
+
+# Logs
+*.log

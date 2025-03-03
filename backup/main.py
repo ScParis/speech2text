@@ -17,10 +17,6 @@ import logging
 import threading
 import mimetypes
 import queue
-import sys
-from PyQt5.QtWidgets import QApplication
-from config.settings import OUTPUT_DIR, setup_logging
-from gui.main_window import MainWindow
 
 # Configurar logging
 logging.basicConfig(
@@ -166,9 +162,12 @@ def download_audio_from_youtube(youtube_url):
             'quiet': True,
             'force': True,
             'no_warnings': True,
+            'ignoreerrors': True,  # Ignorar erros e continuar
+            'extract_flat': True,  # Extrair informações básicas sem baixar o vídeo
+            'force_generic_extractor': True,  # Forçar o uso de extrator genérico
         }
         start_time_download = time.time()
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([youtube_url])
         
         download_time = time.time() - start_time_download
@@ -540,24 +539,6 @@ continue_processing = True
 start_time = None  # Inicializa start_time aqui
 
 def main():
-    """Ponto de entrada principal da aplicação"""
-    app = QApplication(sys.argv)
-    
-    # Configuração inicial
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
-    setup_logging()
-    
-    # Iniciar aplicação
-    window = MainWindow()
-    window.show()
-    
-    return app.exec_()
-
-if __name__ == '__main__':
-    sys.exit(main())
-
-def main_cli():
     """Função principal para iniciar o processo."""
     global continue_processing
     global start_time  # Declara start_time como global
@@ -866,4 +847,4 @@ def identify_platform(url):
 
 if __name__ == '__main__':
     # Only run the CLI interface if this file is run directly
-    main_cli()
+    main()
