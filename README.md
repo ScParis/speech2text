@@ -1,11 +1,7 @@
 # Speech to Text Transcriber
 
-<<<<<<< HEAD
-=======
-## Descrição
-Aplicativo de transcrição de áudio usando a API Gemini.
+A multi-platform transcription solution with GUI and CLI interfaces, powered by [@ScParis](https://github.com/ScParis).
 
->>>>>>> origin/main
 ## Estrutura do Projeto
 ```
 speech2text/
@@ -13,51 +9,10 @@ speech2text/
 ├── services/       # Serviços principais
 ├── utils/         # Utilitários
 ├── gui/           # Interface gráfica
-<<<<<<< HEAD
 └── output_files/  # Arquivos gerados
 ```
 
-## Requisitos
-- Python 3.8+
-- PyQt5
-- Gemini API key
-
-=======
-├── output_files/  # Arquivos gerados
-└── tests/         # Testes
-```
-
->>>>>>> origin/main
-## Instalação
-```bash
-pip install -r requirements.txt
-```
-
-## Uso
-```bash
-<<<<<<< HEAD
-python main.py
-```
-
-=======
-python gui_app.py
-```
-
-## Requisitos
-- Python 3.8+
-- PyQt5
-- Gemini API key
-
->>>>>>> origin/main
-# Speech-to-Text Transcriber
-
-A multi-platform transcription solution with GUI and CLI interfaces, powered by [@ScParis](https://github.com/ScParis).
-
-Use at your own risk...
-
-## Features
-
-### Core Capabilities
+## Core Capabilities
 - 🎙️ **Multi-source Input**
   - Microphone recording (WAV format)
   - File upload (MP3, WAV, video formats)
@@ -70,20 +25,6 @@ Use at your own risk...
   - Raw transcription
   - Enhanced formatted text
   - Export to TXT files
-
-### GUI Features
-- 🎨 Modern dark theme interface
-- 🔐 Encrypted credential storage
-- 📊 Real-time progress tracking
-- ⚡ One-click operations
-
-### CLI Features
-- 🖥️ Console-based interface
-- 🔄 Batch processing support
-- 🌐 Advanced platform support:
-  - YouTube (public/private videos)
-  - TikTok videos
-  - Instagram Stories/Reels (requires credentials)
 
 ## Installation
 
@@ -117,124 +58,74 @@ venv\Scripts\activate    # Windows
 pip install -r requirements.txt
 ```
 
-## Configuration
-
-### GUI Configuration
-1. Launch application:
-```bash
-python gui_app.py
-```
-
-2. Click settings icon (⚙️) and configure:
-   - **API Key**: Gemini authentication key
-   - **API URL**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`
-   or
-   - **API URL**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent`
-
-3. Credentials are encrypted using AES-256
-
-### CLI Configuration
-Set environment variables:
-```bash
-# Linux/Mac
-export GEMINI_API_KEY='your_api_key'
-export GEMINI_API_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent'
-
-# Windows
-setx GEMINI_API_KEY "your_api_key"
-setx GEMINI_API_URL "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-```
-
 ## Usage
 
 ### GUI Application
 ```bash
-python gui_app.py
+python main.py
 ```
 
 1. **Record Audio**  
-   - Click microphone icon
+   - Click microphone icon (🎤)
    - Speak for up to 5 seconds
    - Automatic transcription
 
 2. **Process Files**  
    - Supported formats: MP3, WAV, MP4, WEBM
-   - Click upload button
+   - Click upload button (📁)
    - Select audio/video file
 
-3. **YouTube Transcription**  
-   - Paste YouTube URL
-   - Click download button
+3. **YouTube/TikTok/Instagram**  
+   - Paste URL in text field
+   - Click process button
+   - Wait for transcription
 
-### Command Line Interface
+### CLI Interface
 ```bash
-python main.py
+python main.py --cli
 ```
 
-1. **Interactive Mode**
-```bash
-Choose input method:
-1. Voice recording
-2. File upload
-3. URL processing
-```
+## Configuration
 
-2. **Direct Processing**
-```bash
-# Process YouTube video
-python main.py --url "https://youtube.com/watch?v=..."
+### API Setup
+1. Get your Gemini API key
+2. Configure via GUI:
+   - Click settings icon (⚙️)
+   - Enter API key
+   - Save configuration
 
-# Process local file
-python main.py --file input.mp3
-```
-
-3. **Advanced Options**
-```bash
-# Instagram Story (requires credentials)
-python main.py --url "instagram-story-url" --username your_username --password your_password
-
-# Batch processing
-python main.py --batch file_list.txt
-```
-
-## Security
-
-| Feature                | Implementation Details                |
-|------------------------|---------------------------------------|
-| Credential Storage     | AES-256 encrypted configuration file |
-| API Communication      | HTTPS with TLS 1.3                   |
-| Session Management     | Ephemeral environment variables      |
-| Audio Data Handling    | Local processing only                 |
+### Security Features
+- AES-256 encrypted credentials
+- Secure API communication
+- Local processing only
 
 ## Supported Platforms
 
-| Platform       | CLI Support | GUI Support |
-|----------------|-------------|-------------|
-| YouTube        | ✅          | ✅          |
-| TikTok         | ✅          | ⚠️*         |
-| Instagram      | ✅          | ⚠️*         |
-| Local Files    | ✅          | ✅          |
-| Microphone     | ✅          | ✅          |
-
-*GUI support requires custom implementation
+| Platform       | Support | Features |
+|----------------|---------|----------|
+| YouTube        | ✅      | Public/Private videos |
+| TikTok         | ✅      | Videos |
+| Instagram      | ✅      | Stories/Reels |
+| Local Files    | ✅      | Audio/Video |
+| Microphone     | ✅      | Live recording |
 
 ## Troubleshooting
 
 Common Issues:
 1. **FFmpeg Not Found**  
-   Ensure FFmpeg is installed and in system PATH
+   ```bash
+   sudo apt install ffmpeg  # Linux
+   choco install ffmpeg    # Windows
+   ```
 
-2. **Audio Recording Issues**  
-   Check microphone permissions and PyAudio installation
+2. **Audio Recording**  
+   - Check microphone permissions
+   - Verify PyAudio installation
 
 3. **API Errors**  
-   Verify credentials and API endpoint configuration
-
-View detailed logs:
-```bash
-tail -f output_files/speech_to_text.log
-```
+   - Verify API key
+   - Check internet connection
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) for full text.
+MIT License - See [LICENSE](LICENSE) for details.
