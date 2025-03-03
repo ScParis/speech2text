@@ -4,6 +4,7 @@
 *.mp3
 *.webm
 *.mkv
+.env
 __pycache__/
 *.pyc
 *.tmp
