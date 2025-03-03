@@ -7,3 +7,4 @@ google-auth
 PyQt5
 PyQtWebEngine
 qtawesome
+pydub==0.25.1
