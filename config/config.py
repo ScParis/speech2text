@@ -2,7 +2,7 @@ import os
 import logging
 import json
 from pathlib import Path
-from dotenv import load_dotenv
+from python_dotenv import load_dotenv
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()

@@ -24,8 +24,8 @@ AUDIO_CONFIG = {
 API_CONFIG = {
     "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash",
     "max_retries": 3,
-    "timeout": 30,
-    "chunk_size_mb": 15
+    "timeout": 60,  # Aumentado para arquivos maiores
+    "chunk_size_mb": 18  # Reduzido para ficar abaixo do limite de 20MB da API
 }
 
 # ...existing code for API key management...

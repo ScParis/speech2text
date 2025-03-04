@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from services.audio_service import extract_audio_from_video
 
 # Adiciona o diretório raiz ao PYTHONPATH
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
