@@ -339,7 +339,7 @@ def convert_to_mp3(input_file, output_file):
 
 def correct_transcript_gemini(transcript):
     """Corrigir a transcrição com o Gemini."""
-    prompt = f"""Corrija a ortografia e gramática do texto a seguir, e garanta que o texto está completo e de acordo com o audio original.{transcript}
+    prompt = f"""Traduza para Português e corrija a ortografia e gramática do texto a seguir, e garanta que o texto está completo e de acordo com o audio original.{transcript}
     """
     corrected_transcript = generate_text_gemini(prompt)
 
